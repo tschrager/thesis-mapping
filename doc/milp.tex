@@ -1,0 +1,53 @@
+\documentclass[11pt,letterpaper]{article}
+
+\usepackage[noend,noline]{algorithm2e}
+\usepackage{amsmath}
+\usepackage[margin=1.2in]{geometry}
+
+\begin{document}
+
+\section{Parameters}
+$c_p$ : Cost of an individual platform $p$ \\
+$n_d$ : Number of designs per platform allowed (this could be expanded into an array if desired values vary by platform) \\
+
+\subsection{Block description}
+
+\subsection{Graph description}
+$n_b$ : Number of blocks of type $b$ \\
+$bw_{b\to c}$ : Amount of communication required between blocks $b$ and $c$
+
+\section{Variables}
+$n_{pd}$ : Number of units that implement design $d$ \\
+$n_p$ : For $p$ in platforms, $n_p$ is the total number of units used \\
+$c$ : Total cost of the system \\
+$w$ : Total power of the system \\
+
+\subsection{FPGA}
+$logic$ : total amount of logic available \\
+$logic_b$ : amount of logic required by block $b$ \\
+$bram$ : total amount of bram available \\
+$bram_b$ : amount of bram required by block $b$ \\
+$dsps$ : total number of dsps available \\
+$dsps_b$ : number of dsps required by block $b$ \\
+
+
+\subsection{GPU}
+
+
+
+\section{Constraints}
+
+
+
+Summing all the units in a platform for each design should give the total number of units for that platform
+$$ \sum_{i=0}^{n_d-1} n_{pd} = n_{p}$$
+
+Summing over all platforms, the number of units times cost should give the total cost of the system
+$$ \sum_{p \in platforms} n_p * c_p = c $$
+
+\section{Objective functions}
+
+$c$ : cost \\
+$w$ : power \\
+
+\end{document}
