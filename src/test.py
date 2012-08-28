@@ -4,11 +4,11 @@ from numpy import *
 
 prob = LpProblem("Simple test Problem",LpMinimize)
 
-maxf=3
-maxx=128
+maxf=128
+maxx=1024
 totalblocks=maxf+maxx
 
-fpgacost=21
+fpgacost=20
 gpucost=10
 
 fongpu=0.50
@@ -18,8 +18,11 @@ fonfpga=0.1
 xonfpga=0.2
 
 numtech=2
-numfpga=36
-numgpu=40
+#numfpga=36
+#numgpu=40
+numfpga=maxf+maxx
+numgpu=maxf+maxx
+#numdesignsperplatform=2
 
 fpga_f=range(numfpga)
 fpga_x=range(numfpga)
@@ -59,7 +62,9 @@ prob+=cost
 
 prob.writeLP('test.txt')
 
-status = prob.solve(GLPK(msg = 0))
+#status = prob.solve(GLPK(msg = 0))
+#status = prob.solve(CPLEX(msg = 0))
+status = prob.solve(GUROBI(msg = 0))
 print LpStatus[status]
 
 for v in prob.variables():
