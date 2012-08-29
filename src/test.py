@@ -57,7 +57,8 @@ for i in range(numgpu):
     #determine if this gpu is used
     prob+=gpuisused[i]*totalblocks - gpu_f[i] - gpu_x[i] >= 0
     gpu_lex_order[i]=LpVariable('gpu_lex_order'+`i`,0,(maxf+1)*(maxx+1),LpInteger)
-    prob+=gpu_lex_order[i] == gpu_x[i]*(maxf+1) + gpu_f[i]
+    #prob+=gpu_lex_order[i] == gpu_x[i]*(maxf+1) + gpu_f[i]
+    prob+=gpu_lex_order[i] == gpu_x[i] + gpu_f[i]*(maxx+1)
     if(i!=0):
         prob+=gpuisused[i-1]>=gpuisused[i]
         #prob+=gpu_x[i-1]>=gpu_x[i]
@@ -71,7 +72,7 @@ boards_used=LpVariable('boards_used',0,None,LpInteger)
 prob+=lpSum([fpgaisused[i] for i in range(numfpga)]) + lpSum([gpuisused[i] for i in range(numgpu)]) == boards_used
 prob+=cost
 
-prob.writeLP('test.txt')
+prob.writeLP('test_test.txt')
 
 #status = prob.solve(GLPK(msg = 0))
 #status = prob.solve(CPLEX(msg = 0))
