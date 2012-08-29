@@ -75,6 +75,7 @@ prob.writeLP('test.txt')
 
 #status = prob.solve(GLPK(msg = 0))
 #status = prob.solve(CPLEX(msg = 0))
+#status = prob.solve(GUROBI(dict(symmetry=2),msg = 0))
 status = prob.solve(GUROBI(msg = 0))
 print LpStatus[status]
 
