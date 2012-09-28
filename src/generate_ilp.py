@@ -17,19 +17,19 @@ numplatforms = 2
 
 #design pfb, fft, xeng
 blocktypes = 3
-numblocks = numpy.array([4,4,16])
+numblocks = numpy.array([16,16,16])
 blockresourcesonplatform = numpy.array([[0.1,0.5],[0.1,0.5],[0.9,0.25]])
 
 inputfrom = [-1,0,1]
 inputconnection = [0,0,1]
-blockinputbw = [0,6.4,0.8]
+blockinputbw = [0,6.4,6.4]
 
 outputto = [1,2,-1]
 outputconnection = [0,1,0]
 blockoutputbw = [6.4,6.4,0]
 
-platforminputbw = [40,10]
-platformoutputbw = [40,10]
+platforminputbw = [10,10]
+platformoutputbw = [40,1]
 
 totalblocks = sum(numblocks)
 numboards = totalblocks
@@ -68,19 +68,35 @@ for currentplatform in range(numplatforms):
         #determine if this board is used
         prob += board_isused[currentplatform,currentboard]*totalblocks - lpSum(board_blocks[blocktype,currentplatform,currentboard] for blocktype in range(blocktypes)) >= 0
         
+        #add in network constrains
         for blocktype in range(blocktypes):
             num_receive_data[blocktype,currentplatform,currentboard]=LpVariable('rcv' + `blocktype` + '_on_' + unique_id,0,numblocks[blocktype],LpInteger)
             num_send_data[blocktype,currentplatform,currentboard]=LpVariable('send' + `blocktype` + '_on_' + unique_id,0,numblocks[blocktype],LpInteger)
             
+            #for constraints on receiving data
             #check that this isn't a source
             if inputfrom[blocktype]!=-1:
                 receivingfrom=inputfrom[blocktype]
                 #if this is a 1 to 1 connection, just see how many blocks need to receive data
                 if inputconnection[blocktype]==0:
-                    prob += num_receive_data[blocktype,currentplatform,currentboard] >= board_blocks[blocktype,currentplatform,currentboard] - board_blocks[receivingfrom,currentplatform,currentboard]
+                    prob += num_receive_data[blocktype,currentplatform,currentboard] == board_blocks[blocktype,currentplatform,currentboard] - board_blocks[receivingfrom,currentplatform,currentboard]
                 #this is a 1 to all connection, send *all* data when any blocks we are communicating with reside on a different platform
                 #TODO: fix this constraint
-                #else:
+                else:
+                    prob += num_receive_data[blocktype,currentplatform,currentboard] == board_blocks[blocktype,currentplatform,currentboard]
+                    #prob += numblocks[receivingfrom] - board_blocks[receivingfrom,currentplatform,currentboard] < numblocks[blocktype]*num_receive_data[blocktype,currentplatform,currentboard]
+
+            #for constraints on sending data
+            #check that this isn't a sink
+            if outputto[blocktype]!=-1:
+                sendingto=outputto[blocktype]
+                #if this is a 1 to 1 connection, just see how many blocks need to receive data
+                if outputconnection[blocktype]==0:
+                    prob += num_send_data[blocktype,currentplatform,currentboard] == board_blocks[blocktype,currentplatform,currentboard] - board_blocks[sendingto,currentplatform,currentboard]
+                #this is a 1 to all connection, send *all* data when any blocks we are communicating with reside on a different platform
+                #TODO: fix this constraint
+                else:
+                    prob += num_send_data[blocktype,currentplatform,currentboard] == board_blocks[blocktype,currentplatform,currentboard]
                     #prob += numblocks[receivingfrom] - board_blocks[receivingfrom,currentplatform,currentboard] < numblocks[blocktype]*num_receive_data[blocktype,currentplatform,currentboard]
                     
                 

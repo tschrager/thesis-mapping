@@ -28,5 +28,5 @@ class Spectrometer(Instrument_Base):
         self.dataflow.append(PFB_CBlock(self.adc_bits,self.bandwidth))
         self.dataflow.append(FFT_CBlock(self.adc_bits,self.bandwidth))
         self.dataflow.append(VAcc_CBlock(self.adc_bits,self.bandwidth,self.acc_len))
-        numblocks = 3
+        numblocks = 4
         return
