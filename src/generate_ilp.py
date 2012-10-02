@@ -79,9 +79,10 @@ for currentplatform in range(numplatforms):
                 receivingfrom=inputfrom[blocktype]
                 #if this is a 1 to 1 connection, just see how many blocks need to receive data
                 if inputconnection[blocktype]==0:
-                    prob += num_receive_data[blocktype,currentplatform,currentboard] == board_blocks[blocktype,currentplatform,currentboard] - board_blocks[receivingfrom,currentplatform,currentboard]
-                #this is a 1 to all connection, send *all* data when any blocks we are communicating with reside on a different platform
-                #TODO: fix this constraint
+                    #at least this much data needs to go over the network
+                    prob += num_receive_data[blocktype,currentplatform,currentboard] >= board_blocks[blocktype,currentplatform,currentboard] - board_blocks[receivingfrom,currentplatform,currentboard]
+                #this is a all to 1 connection, receive *all* data over the network
+                #TODO: add when any blocks we are communicating with reside on a different platform
                 else:
                     prob += num_receive_data[blocktype,currentplatform,currentboard] == board_blocks[blocktype,currentplatform,currentboard]
                     #prob += numblocks[receivingfrom] - board_blocks[receivingfrom,currentplatform,currentboard] < numblocks[blocktype]*num_receive_data[blocktype,currentplatform,currentboard]
@@ -90,11 +91,12 @@ for currentplatform in range(numplatforms):
             #check that this isn't a sink
             if outputto[blocktype]!=-1:
                 sendingto=outputto[blocktype]
-                #if this is a 1 to 1 connection, just see how many blocks need to receive data
+                #if this is a 1 to 1 connection, just see how many blocks need to send data
                 if outputconnection[blocktype]==0:
-                    prob += num_send_data[blocktype,currentplatform,currentboard] == board_blocks[blocktype,currentplatform,currentboard] - board_blocks[sendingto,currentplatform,currentboard]
-                #this is a 1 to all connection, send *all* data when any blocks we are communicating with reside on a different platform
-                #TODO: fix this constraint
+                    #at least this much data needs to go over the network
+                    prob += num_send_data[blocktype,currentplatform,currentboard] >= board_blocks[blocktype,currentplatform,currentboard] - board_blocks[sendingto,currentplatform,currentboard]
+                #this is a 1 to all connection, send *all* data over the network
+                #TODO: when any blocks we are communicating with reside on a different platform
                 else:
                     prob += num_send_data[blocktype,currentplatform,currentboard] == board_blocks[blocktype,currentplatform,currentboard]
                     #prob += numblocks[receivingfrom] - board_blocks[receivingfrom,currentplatform,currentboard] < numblocks[blocktype]*num_receive_data[blocktype,currentplatform,currentboard]
