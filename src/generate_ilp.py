@@ -1,3 +1,5 @@
+#!/usr/bin/python2.6
+
 from pulp import *
 import numpy
 
@@ -117,7 +119,7 @@ for currentplatform in range(numplatforms):
             
 #check that all blocks are allocated
 for blocktype in range(blocktypes):
-    prob+=lpSum(board_blocks[blocktype,currentplatform,currentboard] for currentplatform in range(numplatforms) for currentboard in range(numboards)) >= numblocks[blocktype]
+    prob+=lpSum(board_blocks[blocktype,currentplatform,currentboard] for currentplatform in range(numplatforms) for currentboard in range(numboards)) == numblocks[blocktype]
 
 cost=LpVariable('cost',0,None,LpInteger)
 prob+=lpSum(board_isused[currentplatform,currentboard]*platformcosts[currentplatform] for currentplatform in range(numplatforms) for currentboard in range(numboards)) == cost
