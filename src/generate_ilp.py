@@ -1,5 +1,8 @@
 #!/usr/bin/python2.6
 
+# this runs as is. going to integrate into instrument class so it can use dataflow info from subclassed instrument types
+
+
 from pulp import *
 import numpy
 
