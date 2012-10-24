@@ -12,15 +12,20 @@ class Instrument:
 
         #initialize arrays for ILP variables
         #represnt the number of <blocktype> on board <platform,board>
-        board_blocks = numpy.zeros([blocktypes,numplatforms,numboards],dtype=object)
+        #board_blocks = numpy.zeros([blocktypes,numplatforms,numboards],dtype=object)
+        board_blocks = {}
         #represnt the number of blocks with type <blocktype> on board <platform,board> that need to receive data
-        num_receive_data = numpy.zeros([blocktypes,numplatforms,numboards],dtype=object)
+        #num_receive_data = numpy.zeros([blocktypes,numplatforms,numboards],dtype=object)
+        num_receive_data = {}
         #represnt the number of blocks with type <blocktype> on board <platform,board> that need to send data
-        num_send_data = numpy.zeros([blocktypes,numplatforms,numboards],dtype=object)
+        #num_send_data = numpy.zeros([blocktypes,numplatforms,numboards],dtype=object)
+        num_send_data = {}
         #determine if board <platform,board> is used (has computation blocks assigned to it)
-        board_isused = numpy.zeros([numplatforms,numboards],dtype=object)
+        #board_isused = numpy.zeros([numplatforms,numboards],dtype=object)
+        board_isused = {}
         #force the boards to fill in a certain order (to reduce symmetry in the design)
-        lex_order = numpy.zeros([numplatforms,numboards],dtype=object)
+        #lex_order = numpy.zeros([numplatforms,numboards],dtype=object)
+        lex_order = {}
 
         #multipliers = numpy.zeros([blocktypes],dtype=object)
         multipliers = {}
@@ -41,73 +46,76 @@ class Instrument:
             #     multipliers[blocktype] = 1
             # else:
             #     multipliers[blocktype] = multipliers[blocktype-1]*(numblocks[blocktype-1]+1)
-
+        maxlexorder = nextmult
+        
         for currentplatform in self.platforms:
+            board_isused[currentplatform] = numpy.zeros([numboards],dtype=object)
+            lex_order[currentplatform] = numpy.zeros([numboards],dtype=object)
             for currentboard in range(numboards):
                 unique_id = `currentplatform`+'_'+`currentboard`
-                board_isused[currentplatform,currentboard]=LpVariable('is_used_'+unique_id,0,1,LpInteger)
-                for blocktype in range(blocktypes):
-                    board_blocks[blocktype,currentplatform,currentboard]=LpVariable('num' + `blocktype` + '_on_' + unique_id,0,numblocks[blocktype],LpInteger)
+                board_isused[currentplatform][currentboard]=LpVariable('is_used_'+unique_id,0,1,LpInteger)
+                for blocktype in self.blocks:
+                    board_blocks[(blocktype,currentplatform,currentboard)]=LpVariable('num' + `blocktype` + '_on_' + unique_id,0,self.blocks[blocktype].numblocks,LpInteger)
 
                 # check that we don't overuse resources on the platform
-                prob += lpSum(board_blocks[blocktype,currentplatform,currentboard]*blockresourcesonplatform[blocktype,currentplatform] for blocktype in range(blocktypes)) <= 1
+                prob += lpSum(board_blocks[(blocktype,currentplatform,currentboard)]*self.blocks[blocktype].resources[currentplatform] for blocktype in self.blocks) <= 1
 
                 #determine if this board is used
-                prob += board_isused[currentplatform,currentboard]*totalblocks - lpSum(board_blocks[blocktype,currentplatform,currentboard] for blocktype in range(blocktypes)) >= 0
+                prob += board_isused[currentplatform][currentboard]*self.totalblocks - lpSum(board_blocks[(blocktype,currentplatform,currentboard)] for blocktype in self.blocks) >= 0
 
                 #add in network constrains
-                for blocktype in range(blocktypes):
-                    num_receive_data[blocktype,currentplatform,currentboard]=LpVariable('rcv' + `blocktype` + '_on_' + unique_id,0,numblocks[blocktype],LpInteger)
-                    num_send_data[blocktype,currentplatform,currentboard]=LpVariable('send' + `blocktype` + '_on_' + unique_id,0,numblocks[blocktype],LpInteger)
+                for blocktype in self.blocks:
+                    num_receive_data[(blocktype,currentplatform,currentboard)]=LpVariable('rcv' + `blocktype` + '_on_' + unique_id,0,self.blocks[blocktype].numblocks,LpInteger)
+                    num_send_data[(blocktype,currentplatform,currentboard)]=LpVariable('send' + `blocktype` + '_on_' + unique_id,0,self.blocks[blocktype].numblocks,LpInteger)
 
                     #for constraints on receiving data
                     #check that this isn't a source
-                    if inputfrom[blocktype]!=-1:
-                        receivingfrom=inputfrom[blocktype]
+                    if self.blocks[blocktype].inputfrom!=-1:
+                        receivingfrom=self.blocks[blocktype].inputfrom
                         #if this is a 1 to 1 connection, just see how many blocks need to receive data
-                        if inputconnection[blocktype]==0:
+                        if self.blocks[blocktype].inputconnection==0:
                             #at least this much data needs to go over the network
-                            prob += num_receive_data[blocktype,currentplatform,currentboard] >= board_blocks[blocktype,currentplatform,currentboard] - board_blocks[receivingfrom,currentplatform,currentboard]
+                            prob += num_receive_data[(blocktype,currentplatform,currentboard)] >= board_blocks[(blocktype,currentplatform,currentboard)] - board_blocks[(receivingfrom,currentplatform,currentboard)]
                         #this is a all to 1 connection, receive *all* data over the network
                         #TODO: add when any blocks we are communicating with reside on a different platform
                         else:
-                            prob += num_receive_data[blocktype,currentplatform,currentboard] == board_blocks[blocktype,currentplatform,currentboard]
+                            prob += num_receive_data[(blocktype,currentplatform,currentboard)] == board_blocks[(blocktype,currentplatform,currentboard)]
                             #prob += numblocks[receivingfrom] - board_blocks[receivingfrom,currentplatform,currentboard] < numblocks[blocktype]*num_receive_data[blocktype,currentplatform,currentboard]
 
                     #for constraints on sending data
                     #check that this isn't a sink
-                    if outputto[blocktype]!=-1:
-                        sendingto=outputto[blocktype]
+                    if self.blocks[blocktype].outputto!=-1:
+                        sendingto=self.blocks[blocktype].outputto
                         #if this is a 1 to 1 connection, just see how many blocks need to send data
-                        if outputconnection[blocktype]==0:
+                        if self.blocks[blocktype].outputconnection==0:
                             #at least this much data needs to go over the network
-                            prob += num_send_data[blocktype,currentplatform,currentboard] >= board_blocks[blocktype,currentplatform,currentboard] - board_blocks[sendingto,currentplatform,currentboard]
+                            prob += num_send_data[(blocktype,currentplatform,currentboard)] >= board_blocks[(blocktype,currentplatform,currentboard)] - board_blocks[(sendingto,currentplatform,currentboard)]
                         #this is a 1 to all connection, send *all* data over the network
                         #TODO: when any blocks we are communicating with reside on a different platform
                         else:
-                            prob += num_send_data[blocktype,currentplatform,currentboard] == board_blocks[blocktype,currentplatform,currentboard]
+                            prob += num_send_data[(blocktype,currentplatform,currentboard)] == board_blocks[(blocktype,currentplatform,currentboard)]
                             #prob += numblocks[receivingfrom] - board_blocks[receivingfrom,currentplatform,currentboard] < numblocks[blocktype]*num_receive_data[blocktype,currentplatform,currentboard]
 
 
 
                 #check that we don't exceed the input/output bandwidth
-                prob += lpSum(blockinputbw[blocktype]*num_receive_data[blocktype,currentplatform,currentboard] for blocktype in range(blocktypes)) <= platforminputbw[currentplatform]
-                prob += lpSum(blockoutputbw[blocktype]*num_send_data[blocktype,currentplatform,currentboard] for blocktype in range(blocktypes)) <= platformoutputbw[currentplatform]
+                prob += lpSum(self.blocks[blocktype].inputbw*num_receive_data[blocktype,currentplatform,currentboard] for blocktype in self.blocks) <= self.platforms[currentplatform].inputbw
+                prob += lpSum(self.blocks[blocktype].outputbw*num_send_data[blocktype,currentplatform,currentboard] for blocktype in self.blocks) <= self.platforms[currentplatform].outputbw
 
                 # impose an ordering on the boards, this doesn't do anything to the solution, just breaks some of the symmetry
                 #lex_order[currentplatform,currentboard]=LpVariable('lex_order_'+unique_id,0,(maxblockperplatform+1).prod(),LpInteger)
-                lex_order[currentplatform,currentboard]=LpVariable('lex_order_'+unique_id,0,(numblocks+1).prod(),LpInteger)
-                prob+=lex_order[currentplatform,currentboard] == lpSum(board_blocks[blocktype,currentplatform,currentboard]*multipliers[blocktype] for blocktype in range(blocktypes))
+                lex_order[currentplatform,currentboard]=LpVariable('lex_order_'+unique_id,0,maxlexorder,LpInteger)
+                prob+=lex_order[currentplatform,currentboard] == lpSum(board_blocks[(blocktype,currentplatform,currentboard)]*multipliers[blocktype] for blocktype in self.blocks)
                 if(currentboard!=0):
-                    prob+=board_isused[currentplatform,currentboard-1]>=board_isused[currentplatform,currentboard]
-                    prob+=lex_order[currentplatform,currentboard-1]>=lex_order[currentplatform,currentboard]
+                    prob+=board_isused[currentplatform][currentboard-1]>=board_isused[currentplatform][currentboard]
+                    prob+=lex_order[currentplatform][currentboard-1]>=lex_order[currentplatform][currentboard]
 
         #check that all blocks are allocated
-        for blocktype in range(blocktypes):
-            prob+=lpSum(board_blocks[blocktype,currentplatform,currentboard] for currentplatform in range(numplatforms) for currentboard in range(numboards)) == numblocks[blocktype]
+        for blocktype in self.blocks:
+            prob+=lpSum(board_blocks[(blocktype,currentplatform,currentboard)] for currentplatform in self.platforms for currentboard in range(numboards)) == self.blocks[blocktype].numblocks
 
         cost=LpVariable('cost',0,None,LpInteger)
-        prob+=lpSum(board_isused[currentplatform,currentboard]*platformcosts[currentplatform] for currentplatform in range(numplatforms) for currentboard in range(numboards)) == cost
+        prob+=lpSum(board_isused[currentplatform][currentboard]*self.platforms[currentplatform].cost for currentplatform in self.platforms for currentboard in range(numboards)) == cost
         #boards_used=LpVariable('boards_used',0,None,LpInteger)
         #prob+=lpSum([fpgaisused[i] for i in range(numfpga)]) + lpSum([gpuisused[i] for i in range(numgpu)]) == boards_used
         prob+=cost

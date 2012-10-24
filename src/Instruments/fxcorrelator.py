@@ -47,16 +47,16 @@ class FXCorrelator(Instrument):
         self.totalblocks = 0
         
         # add the PFB
-        self.blocks['PFB'] = CBlock({'ROACH': 0.1,'GPU': 0.5},-1,0,0,1,0,6.4,16)
+        self.blocks['PFB'] = CBlock({'ROACH': 0.1,'GPU': 0.5},-1,0,0,'FFT',0,6.4,16)
         self.totalblocks += 16
         #self.blocks.append
         
         # add the FFT
-        self.blocks['FFT'] = CBlock({'ROACH': 0.1, 'GPU': 0.5},0, 0,6.4,2,1,6.4,16)
+        self.blocks['FFT'] = CBlock({'ROACH': 0.1, 'GPU': 0.5},'PFB',0,6.4,'XEng',1,6.4,16)
         self.totalblocks += 16
         
         # add the XEngines
-        self.blocks['XEng'] = CBlock({'ROACH': 0.9, 'GPU': 0.25} ,1, 1,6.4,-1,0,0,32)
+        self.blocks['XEng'] = CBlock({'ROACH': 0.9, 'GPU': 0.25} ,'PFB', 1,6.4,-1,0,0,16)
         self.totalblocks += 32
         
         #add the platforms
