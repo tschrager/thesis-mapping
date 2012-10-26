@@ -1,7 +1,7 @@
 #!/usr/bin/python2.6
 
-from pulp import *
-import numpy
+#from pulp import *
+#import numpy
 from instrument import Instrument
 from cblock import CBlock
 from platform import Platform
@@ -47,16 +47,16 @@ class FXCorrelator(Instrument):
         self.totalblocks = 0
         
         # add the PFB
-        self.blocks['PFB'] = CBlock({'ROACH': 0.1,'GPU': 0.5},-1,0,0,'FFT',0,6.4,16)
+        self.blocks['PFB'] = CBlock({'ROACH': 0.1,'GPU': 0.5},-1,0,0,'FFT',0,6.4,numant)
         self.totalblocks += 16
         #self.blocks.append
         
         # add the FFT
-        self.blocks['FFT'] = CBlock({'ROACH': 0.1, 'GPU': 0.5},'PFB',0,6.4,'XEng',1,6.4,16)
+        self.blocks['FFT'] = CBlock({'ROACH': 0.1, 'GPU': 0.5},'PFB',0,6.4,'XEng',1,6.4,numant)
         self.totalblocks += 16
         
         # add the XEngines
-        self.blocks['XEng'] = CBlock({'ROACH': 0.9, 'GPU': 0.25} ,'PFB', 1,6.4,-1,0,0,16)
+        self.blocks['XEng'] = CBlock({'ROACH': 0.9, 'GPU': 0.25} ,'PFB', 1,6.4,-1,0,0,numant)
         self.totalblocks += 32
         
         #add the platforms

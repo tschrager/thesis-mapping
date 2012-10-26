@@ -41,12 +41,14 @@ class Instrument:
             #    if 1/self.blocks[blocktype].resources[currentplatform] > maxblockperplatform[blocktype]:
             #        maxblockperplatform[blocktype] = numpy.floor(1/self.blocks[blocktype].resources[currentplatform] )
             multipliers[blocktype] = nextmult
-            nextmult = multipliers[blocktype]*self.blocks[blocktype].numblocks+1
+            nextmult = multipliers[blocktype]*(self.blocks[blocktype].numblocks+1)
             # if blocktype == 0:
             #     multipliers[blocktype] = 1
             # else:
             #     multipliers[blocktype] = multipliers[blocktype-1]*(numblocks[blocktype-1]+1)
         maxlexorder = nextmult
+        #print multipliers
+        #print maxlexorder
         
         for currentplatform in self.platforms:
             board_isused[currentplatform] = numpy.zeros([numboards],dtype=object)

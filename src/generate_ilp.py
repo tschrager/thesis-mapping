@@ -22,13 +22,13 @@ numplatforms = 2
 
 #design pfb, fft, xeng
 #blocktypes = 3
-numblocks = numpy.array([16,16,16])
+numblocks = numpy.array([16,16,32])
 
 blockresourcesonplatform = numpy.array([[0.1,0.5],[0.1,0.5],[0.9,0.25]])
 
 inputfrom = [-1,0,1]
 inputconnection = [0,0,1]
-blockinputbw = [0,6.4,6.4]
+blockinputbw = [0,6.4,3.2]
 
 outputto = [1,2,-1]
 outputconnection = [0,1,0]
