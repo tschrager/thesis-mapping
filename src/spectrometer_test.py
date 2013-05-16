@@ -24,7 +24,7 @@ from Instruments import *
 
 def place_spectrometer(numchannels,accumulation_length,bandwidth):
     #create the instrument
-    myspectrometer = Spectrometer(10,10,10)
+    myspectrometer = Spectrometer(15,10,400)
     #fill in instrument.blocks
     #fill in instrument.platforms
     #run the ilp by passing it the instrument

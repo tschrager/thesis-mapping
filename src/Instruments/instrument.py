@@ -60,7 +60,8 @@ class Instrument:
                     board_blocks[(blocktype,currentplatform,currentboard)]=LpVariable('num' + `blocktype` + '_on_' + unique_id,0,self.blocks[blocktype].numblocks,LpInteger)
 
                 # check that we don't overuse resources on the platform
-                prob += lpSum(board_blocks[(blocktype,currentplatform,currentboard)]*self.blocks[blocktype].resources[currentplatform] for blocktype in self.blocks) <= 1
+                for currentresource in self.platforms[currentplatform].resources:
+                    prob += lpSum(board_blocks[(blocktype,currentplatform,currentboard)]*self.blocks[blocktype].resources[currentplatform][currentresource] for blocktype in self.blocks) <= 1
 
                 #determine if this board is used
                 prob += board_isused[currentplatform][currentboard]*self.totalblocks - lpSum(board_blocks[(blocktype,currentplatform,currentboard)] for blocktype in self.blocks) >= 0
@@ -128,6 +129,6 @@ class Instrument:
         print LpStatus[status]
 
         for v in prob.variables():
-            if(v.varValue != 0):
+            if(v.varValue != 0 and ('num' in v.name or 'cost' in v.name)):
                 print v.name, "=", v.varValue
     
