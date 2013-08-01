@@ -46,24 +46,28 @@ class FXCorrelator(Instrument):
         self.blocks = {}
         self.totalblocks = 0
         
+        # add the ADC
+        self.blocks['ADC'] = CBlock({'ROACH': {'registers': 0, 'slices': 0, 'dsp': 0, 'bram': 0},'GPU': {'time': 1.1}},-1,0,0,'PFB',0,6.4,numant)
+        self.totalblocks += numant
+        
         # add the PFB
-        self.blocks['PFB'] = CBlock({'ROACH': 0.1,'GPU': 0.5},-1,0,0,'FFT',0,6.4,numant)
-        self.totalblocks += 16
+        self.blocks['PFB'] = CBlock({'ROACH': {'registers': 0.2, 'slices': 0.1, 'dsp': 0.1, 'bram': 0.4},'GPU': {'time': 0.56}},'ADC',0,6.4,'FFT',0,6.4,numant)
+        self.totalblocks += numant
         #self.blocks.append
         
         # add the FFT
-        self.blocks['FFT'] = CBlock({'ROACH': 0.1, 'GPU': 0.5},'PFB',0,6.4,'XEng',1,6.4,numant)
-        self.totalblocks += 16
+        self.blocks['FFT'] = CBlock({'ROACH': {'registers': 0.2, 'slices': 0.1, 'dsp': 0.1, 'bram':0.4}, 'GPU': {'time': 0.5}},'PFB',0,6.4,'XEng',1,6.4,numant)
+        self.totalblocks += numant
         
         # add the XEngines
-        self.blocks['XEng'] = CBlock({'ROACH': 0.9, 'GPU': 0.25} ,'PFB', 1,6.4,-1,0,0,numant)
-        self.totalblocks += 32
+        self.blocks['XEng'] = CBlock({'ROACH': {'registers': 0.9, 'slices': 0.1, 'dsp': 0.1, 'bram':0.4}, 'GPU': {'time': 0.25}} ,'FFT', 1,6.4,-1,0,0,numchannels)
+        self.totalblocks += numchannels
         
         #add the platforms
         self.platforms = {}
         
-        self.platforms['ROACH'] = Platform(20,10,40)
-        self.platforms['GPU'] = Platform(10,10,1)
+        self.platforms['ROACH'] = Platform(20,10,40,['registers','slices','dsp','bram'])
+        self.platforms['GPU'] = Platform(10,10,1,['time'])
         
         
 

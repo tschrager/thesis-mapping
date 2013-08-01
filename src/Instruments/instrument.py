@@ -130,5 +130,6 @@ class Instrument:
 
         for v in prob.variables():
             if(v.varValue != 0 and ('num' in v.name or 'cost' in v.name)):
+            #if(v.varValue != 0):
                 print v.name, "=", v.varValue
     

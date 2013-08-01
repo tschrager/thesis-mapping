@@ -3,33 +3,32 @@
 # Copyright (c) 2012, Terry Filiba
 # All rights reserved.
 # 
-# This file is part of Foobar.
+# This file is part of ORCAS.
 # 
-# Foobar is free software: you can redistribute it and/or modify
+# ORCAS is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 # 
-# Foobar is distributed in the hope that it will be useful,
+# ORCAS is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 # 
 # You should have received a copy of the GNU General Public License
-# along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
+# along with ORCAS.  If not, see <http://www.gnu.org/licenses/>.
 
 
 
 from Instruments import *
 
-def place_spectrometer(numchannels,accumulation_length,bandwidth):
-    #create the instrument
-    myspectrometer = Spectrometer(15,10,400)
-    #fill in instrument.blocks
-    #fill in instrument.platforms
-    #run the ilp by passing it the instrument
-    #generateILP(myspectrometer)
-    myspectrometer.runILP()
+numchannels = 1024
+accumulation_length  = 10
+bandwidth = 0.8
+input_bitwidth = 8
+fft_out_bitwidth = 4
     
-    
-place_spectrometer(10,10,10)
+#create the instrument
+myspectrometer = Spectrometer(numchannels, accumulation_length, bandwidth, input_bitwidth, fft_out_bitwidth)
+myspectrometer.runILP()
+

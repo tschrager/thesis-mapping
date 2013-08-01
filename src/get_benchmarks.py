@@ -33,8 +33,32 @@ def get_gpu_benchmarks(filename,size):
     
     result = {}
     #check the regex...
-    result['runtime'] = re.findall(`size`+"\s*(\d+(\.\d*)?)",benchmarktext)
-    print result   
+    allbenchmarks = re.findall(`size`+"\s+(\d+)\s+\d+\.\d*\s+(\d+\.\d*)\s+\d+\.\d*\s+(\d+\.\d*)\s+\d+\.\d*\s+(\d+)",benchmarktext)
+    lastbenchmark = len(allbenchmarks)-1
+    print allbenchmarks[lastbenchmark][2]
+    result['runtime'] = float(allbenchmarks[lastbenchmark][2])/(100*int(allbenchmarks[lastbenchmark][0]))
+    #print allbenchmarks
+    return result  
+    
+def plot_gpu_fft_benchmarks():
+    max_n = 20
+    runtime = numpy.zeros(max_n)
+    for i in range(8,max_n):
+        results = get_gpu_benchmarks(benchmark_dir+'gpu/fft/results/c2c_gtx580_100x',2**i)
+        #print results
+        runtime[i] = results['runtime']
+    print runtime
+    ind = numpy.arange(max_n)
+    
+    plt.clf()
+    plt.plot(ind,runtime)
+    plt.xlim((7,max_n))
+    #plt.legend(('registers','luts','bram','dsp'), loc='upper left')
+    plt.title('FFT Benchmark on GTX580')
+    plt.xlabel('log$_2$(FFT length)')
+    plt.ylabel('Runtime (ms)')
+    plt.savefig('Figures/fft_gpu_bench.png')
+    #plt.show()
 
 # plot fft benchmark data
 def plot_fft_benchmarks():
@@ -59,7 +83,7 @@ def plot_fft_benchmarks():
     plt.bar(ind+width,dsp/640,width,color='blue')
     
     plt.legend(('registers','luts','bram','dsp'), loc='upper left')
-    plt.title('')
+    plt.title('800 MHz FFT Resource Utilization on Virtex 5 sx95t')
     plt.xlabel('log$_2$(FFT length)')
     plt.ylabel('Utilization (%)')
     plt.savefig('Figures/fft_bench.png')
@@ -99,7 +123,8 @@ def plot_pfb_benchmarks():
 
 #get_fpga_benchmarks(benchmark_dir+'fpga/fft/results/v5sx95t/fftw_12_2_18_18_cw_map.map')
 #get_gpu_benchmarks(benchmark_dir+'gpu/fft/results/c2c_gtx580_100x',256)
-plot_fft_benchmarks()
-plot_pfb_benchmarks()
+#plot_fft_benchmarks()
+#plot_pfb_benchmarks()
+plot_gpu_fft_benchmarks()
 
 
