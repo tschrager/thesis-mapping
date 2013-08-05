@@ -1,3 +1,21 @@
+# Copyright (c) 2012, Terry Filiba
+# All rights reserved.
+# 
+# This file is part of ORCAS.
+# 
+# ORCAS is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# 
+# ORCAS is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with ORCAS.  If not, see <http://www.gnu.org/licenses/>.
+
 import re
 import os
 import math
@@ -77,6 +95,8 @@ class CBlock:
             if platforms[platform].instrumenttype == 'ROACH':
                 bench = CBlock.get_fpga_benchmarks(benchmark_dir+'fpga/pfb/results/v5sx95t/pfb_%02d_4_2_08_18_cw_map.map'%math.log(numchannels,2))
                 model[platform] = bench
+            if platforms[platform].instrumenttype == 'IBOB':
+                model[platform] = {'resources':1.1}
             if platforms[platform].instrumenttype == 'GPU':
                 bench = CBlock.get_gpu_benchmarks(benchmark_dir+'gpu/pfb/results/pfb_4_gtx580_100x',numchannels)
                 #print bench['time']
@@ -94,6 +114,8 @@ class CBlock:
             if platforms[platform].instrumenttype == 'ROACH':
                 bench = CBlock.get_fpga_benchmarks(benchmark_dir+'fpga/fft/results/v5sx95t/fftw_%02d_2_18_18_cw_map.map'%math.log(numchannels,2))
                 model[platform] = bench
+            if platforms[platform].instrumenttype == 'IBOB':
+                model[platform] = {'resources':1.1}
             if platforms[platform].instrumenttype == 'GPU':
                 bench = CBlock.get_gpu_benchmarks(benchmark_dir+'gpu/fft/results/c2c_gtx580_100x',numchannels)
                 #print bench['time']
@@ -101,7 +123,7 @@ class CBlock:
                 # 1/bandwidth GHz * number of channels * 10^-6 = time allowed in ms
                 bench['time'] = bench['time']/(1/bandwidth*numchannels*math.pow(10,-6))
                 model[platform] = bench
-        #print model        
+        print model        
         return model
 
     @staticmethod
@@ -110,4 +132,4 @@ class CBlock:
 
     @staticmethod
     def getVAccModel(platforms, bandwidth, fft_out_bitwidth, accumulation_length):
-        return {'ROACH': {'registers': 0.2, 'luts': 0.1, 'dsp': 0.1, 'bram':0}, 'GPU': {'time': 0.1}}
+        return {'ROACH': {'registers': 0.2, 'luts': 0.1, 'dsp': 0.1, 'bram':0}, 'GPU': {'time': 0.1}, 'IBOB' : {'resources':1.1}}

@@ -25,7 +25,8 @@ from Instruments import *
 # 800MHz spectrometer
 numchannels = 1024
 accumulation_length  = 10
-bandwidth = 0.8
+#bandwidth = 0.8
+bandwidth = 0.05
 input_bitwidth = 8
 fft_out_bitwidth = 4
     

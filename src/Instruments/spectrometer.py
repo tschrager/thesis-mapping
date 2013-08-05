@@ -1,6 +1,3 @@
-#!/usr/bin/python2.6
-
-
 # Copyright (c) 2012, Terry Filiba
 # All rights reserved.
 # 
@@ -38,6 +35,7 @@ class Spectrometer(Instrument):
         # add platforms: cost, inputbw, outputbw, resources
         self.platforms['ROACH'] = Platform('ROACH',6700,40,40,['registers','luts','dsp','bram'])
         self.platforms['GPU'] = Platform('GPU',3500,10,1,['time'])
+        self.platforms['IBOB'] = Platform('IBOB',2000,10,1,['resources'])
 
         # add the ADC
         adc_bw = bandwidth*input_bitwidth

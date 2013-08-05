@@ -1,45 +1,26 @@
-#!/usr/bin/python2.6
+# Copyright (c) 2012, Terry Filiba
+# All rights reserved.
+# 
+# This file is part of ORCAS.
+# 
+# ORCAS is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# 
+# ORCAS is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with ORCAS.  If not, see <http://www.gnu.org/licenses/>.
 
 #from pulp import *
 #import numpy
 from instrument import Instrument
 from cblock import CBlock
 from platform import Platform
-   
-#from working ilp test. need to generate this      
-# numplatforms = 2
-# 
-# #design pfb, fft, xeng
-# # blocktypes = 5
-# # numblocks = numpy.array([128,128,128,128,128])
-# # blockresourcesonplatform = numpy.array([[0.1,0.5],[0.1,0.5],[0.1,0.5],[0.1,0.5],[0.2,0.25]])
-# 
-# #design fft, xeng
-# # blocktypes = 2
-# # numblocks = numpy.array([128,1024])
-# # blockresourcesonplatform = numpy.array([[0.1,0.5],[0.2,0.25]])
-# 
-# #design pfb, fft, xeng
-# #blocktypes = 3
-# numblocks = numpy.array([16,16,16])
-# 
-# blockresourcesonplatform = numpy.array([[0.1,0.5],[0.1,0.5],[0.9,0.25]])
-# 
-# inputfrom = [-1,0,1]
-# inputconnection = [0,0,1]
-# blockinputbw = [0,6.4,6.4]
-# 
-# outputto = [1,2,-1]
-# outputconnection = [0,1,0]
-# blockoutputbw = [6.4,6.4,0]
-# 
-# platforminputbw = [10,10]
-# platformoutputbw = [40,1]
-# 
-# totalblocks = sum(numblocks)
-# numboards = totalblocks
-# 
-# platformcosts = numpy.array([20,10])
         
 class FXCorrelator(Instrument):
     def __init__(self, numchannels, numant, accumulation_length, bandwidth, input_bitwidth, fft_out_bitwidth):
