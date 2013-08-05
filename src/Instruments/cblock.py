@@ -23,11 +23,19 @@ class CBlock:
                 for resource in platforms[platform].resources:
                     model[platform][resource] = 1.1
         return model
-        
+    
+    @staticmethod    
     def getPFBModel(platforms):
-        model = {}
-        for platform in platforms:
-            model[platform] = {}
-            for resource in platforms[platform].resources:
-                model[platform][resource] = 0.2
-        return model
+        return {'ROACH': {'registers': 0.2, 'slices': 0.1, 'dsp': 0.1, 'bram': 0.4},'GPU': {'time': 0.56}}
+
+    @staticmethod    
+    def getFFTModel(platforms):
+        return {'ROACH': {'registers': 0.2, 'slices': 0.1, 'dsp': 0.1, 'bram':0.4}, 'GPU': {'time': 0.5}}
+
+    @staticmethod
+    def getXEngModel(platforms):
+        return {'ROACH': {'registers': 0.9, 'slices': 0.1, 'dsp': 0.1, 'bram':0.4}, 'GPU': {'time': 0.25}}
+
+    @staticmethod
+    def getVAccModel(platforms):
+        return {'ROACH': {'registers': 0.2, 'slices': 0.1, 'dsp': 0.1, 'bram':0}, 'GPU': {'time': 0.1}}

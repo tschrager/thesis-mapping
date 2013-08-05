@@ -42,32 +42,38 @@ from platform import Platform
 # platformcosts = numpy.array([20,10])
         
 class FXCorrelator(Instrument):
-    def __init__(self, numchannels, numant, accumulation_length, bandwidth):
+    def __init__(self, numchannels, numant, accumulation_length, bandwidth, input_bitwidth, fft_out_bitwidth):
         self.blocks = {}
         self.totalblocks = 0
-        
-        # add the ADC
-        self.blocks['ADC'] = CBlock({'ROACH': {'registers': 0, 'slices': 0, 'dsp': 0, 'bram': 0},'GPU': {'time': 1.1}},-1,0,0,'PFB',0,6.4,numant)
-        self.totalblocks += numant
-        
-        # add the PFB
-        self.blocks['PFB'] = CBlock({'ROACH': {'registers': 0.2, 'slices': 0.1, 'dsp': 0.1, 'bram': 0.4},'GPU': {'time': 0.56}},'ADC',0,6.4,'FFT',0,6.4,numant)
-        self.totalblocks += numant
-        #self.blocks.append
-        
-        # add the FFT
-        self.blocks['FFT'] = CBlock({'ROACH': {'registers': 0.2, 'slices': 0.1, 'dsp': 0.1, 'bram':0.4}, 'GPU': {'time': 0.5}},'PFB',0,6.4,'XEng',1,6.4,numant)
-        self.totalblocks += numant
-        
-        # add the XEngines
-        self.blocks['XEng'] = CBlock({'ROACH': {'registers': 0.9, 'slices': 0.1, 'dsp': 0.1, 'bram':0.4}, 'GPU': {'time': 0.25}} ,'FFT', 1,6.4,-1,0,0,numchannels)
-        self.totalblocks += numchannels
+        self.maxdesigns = 1
         
         #add the platforms
         self.platforms = {}
         
-        self.platforms['ROACH'] = Platform(20,10,40,['registers','slices','dsp','bram'])
-        self.platforms['GPU'] = Platform(10,10,1,['time'])
+        self.platforms['ROACH'] = Platform('ROACH',20,10,40,['registers','slices','dsp','bram'])
+        self.platforms['GPU'] = Platform('GPU',10,10,1,['time'])
+        
+        # add the ADC
+        adc_bw = bandwidth*input_bitwidth
+        self.blocks['ADC'] = CBlock({'ROACH': {'registers': 0, 'slices': 0, 'dsp': 0, 'bram': 0},'GPU': {'time': 1.1}},-1,0,0,'PFB',0,adc_bw,numant)
+        self.totalblocks += numant
+        
+        # add the PFB
+        self.blocks['PFB'] = CBlock({'ROACH': {'registers': 0.2, 'slices': 0.1, 'dsp': 0.1, 'bram': 0.4},'GPU': {'time': 0.56}},'ADC',0,adc_bw,'FFT',0,adc_bw,numant)
+        self.totalblocks += numant
+        #self.blocks.append
+        
+        # add the FFT
+        fft_out_bandwidth = bandwidth* fft_out_bitwidth
+        self.blocks['FFT'] = CBlock({'ROACH': {'registers': 0.2, 'slices': 0.1, 'dsp': 0.1, 'bram':0.4}, 'GPU': {'time': 0.5}},'PFB',0,adc_bw,'XEng',1,fft_out_bandwidth,numant)
+        self.totalblocks += numant
+        
+        # add the XEngines
+        xengine_in_bandwidth = fft_out_bandwidth*numant/numchannels
+        self.blocks['XEng'] = CBlock(CBlock.getXEngModel(self.platforms) ,'FFT', 1,xengine_in_bandwidth,-1,0,0,numchannels)
+        self.totalblocks += numchannels
+        
+        
         
         
 

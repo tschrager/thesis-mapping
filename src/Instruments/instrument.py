@@ -23,9 +23,11 @@ class Instrument:
         #determine if board <platform,board> is used (has computation blocks assigned to it)
         #board_isused = numpy.zeros([numplatforms,numboards],dtype=object)
         board_isused = {}
+        board_isdifferent = {}
         #force the boards to fill in a certain order (to reduce symmetry in the design)
         #lex_order = numpy.zeros([numplatforms,numboards],dtype=object)
         lex_order = {}
+        
 
         #multipliers = numpy.zeros([blocktypes],dtype=object)
         multipliers = {}
@@ -52,12 +54,16 @@ class Instrument:
         
         for currentplatform in self.platforms:
             board_isused[currentplatform] = numpy.zeros([numboards],dtype=object)
+            board_isdifferent[currentplatform] = numpy.zeros([numboards],dtype=object)
             lex_order[currentplatform] = numpy.zeros([numboards],dtype=object)
             for currentboard in range(numboards):
                 unique_id = `currentplatform`+'_'+`currentboard`
                 board_isused[currentplatform][currentboard]=LpVariable('is_used_'+unique_id,0,1,LpInteger)
+                board_isdifferent[currentplatform][currentboard]=LpVariable('is_different_'+unique_id,0,1,LpInteger)
                 for blocktype in self.blocks:
                     board_blocks[(blocktype,currentplatform,currentboard)]=LpVariable('num' + `blocktype` + '_on_' + unique_id,0,self.blocks[blocktype].numblocks,LpInteger)
+                    #if(currentboard!=0 and self.maxdesigns == 1):
+                    #    prob += board_blocks[(blocktype,currentplatform,currentboard)] == board_blocks[(blocktype,currentplatform,currentboard-1)]
 
                 # check that we don't overuse resources on the platform
                 for currentresource in self.platforms[currentplatform].resources:
@@ -107,11 +113,19 @@ class Instrument:
 
                 # impose an ordering on the boards, this doesn't do anything to the solution, just breaks some of the symmetry
                 #lex_order[currentplatform,currentboard]=LpVariable('lex_order_'+unique_id,0,(maxblockperplatform+1).prod(),LpInteger)
-                lex_order[currentplatform,currentboard]=LpVariable('lex_order_'+unique_id,0,maxlexorder,LpInteger)
-                prob+=lex_order[currentplatform,currentboard] == lpSum(board_blocks[(blocktype,currentplatform,currentboard)]*multipliers[blocktype] for blocktype in self.blocks)
+                lex_order[currentplatform][currentboard]=LpVariable('lex_order_'+unique_id,0,maxlexorder,LpInteger)
+                prob+=lex_order[currentplatform][currentboard] == lpSum(board_blocks[(blocktype,currentplatform,currentboard)]*multipliers[blocktype] for blocktype in self.blocks)
+                
+                if(currentboard==0):
+                    board_isdifferent[currentplatform][currentboard]=0
                 if(currentboard!=0):
-                    prob+=board_isused[currentplatform][currentboard-1]>=board_isused[currentplatform][currentboard]
                     prob+=lex_order[currentplatform][currentboard-1]>=lex_order[currentplatform][currentboard]
+                    prob+=board_isused[currentplatform][currentboard-1]>=board_isused[currentplatform][currentboard]
+                    if(self.maxdesigns != 0):  
+                        prob+=lex_order[currentplatform][currentboard] - lex_order[currentplatform][currentboard-1] >= maxlexorder * (board_isused[currentplatform][currentboard]-1)
+            
+            #if(self.maxdesigns != 0):        
+            #    prob+= lpSum(board_isdifferent[currentplatform][currentboard] for currentboard in range(numboards)) <= self.maxdesigns
 
         #check that all blocks are allocated
         for blocktype in self.blocks:
@@ -123,13 +137,16 @@ class Instrument:
         #prob+=lpSum([fpgaisused[i] for i in range(numfpga)]) + lpSum([gpuisused[i] for i in range(numgpu)]) == boards_used
         prob+=cost
 
+        #prob+=board_blocks[('ADC0','ROACH',0)]==1
+
         prob.writeLP('test_generate_ilp.txt')
 
         status = prob.solve(GUROBI(msg = 0))
         print LpStatus[status]
 
         for v in prob.variables():
-            if(v.varValue != 0 and ('num' in v.name or 'cost' in v.name)):
+            #if(v.varValue != 0 and ('num' in v.name or 'cost' in v.name or 'different' in v.name or 'lex' in v.name or 'is_used' in v.name)):
             #if(v.varValue != 0):
+            if(v.varValue != 0 and ('num' in v.name or 'cost' in v.name or 'is_used' in v.name)):
                 print v.name, "=", v.varValue
     

@@ -27,7 +27,8 @@ from platform import Platform
         
         
 class Spectrometer(Instrument):
-    def __init__(self, numchannels, accumulation_length, bandwidth, input_bitwidth, fft_out_bitwidth):
+    def __init__(self, numchannels, accumulation_length, bandwidth, input_bitwidth, fft_out_bitwidth, antennas=9):
+        self.maxdesigns = 1
         self.blocks = {}
         self.totalblocks = 0
         
@@ -37,25 +38,25 @@ class Spectrometer(Instrument):
         # add platforms: cost, inputbw, outputbw, resources
         self.platforms['ROACH'] = Platform('ROACH',6700,40,40,['registers','slices','dsp','bram'])
         self.platforms['GPU'] = Platform('GPU',3500,10,1,['time'])
-        
+
         # add the ADC
         adc_bw = bandwidth*input_bitwidth
-        self.blocks['ADC'] = CBlock(CBlock.getADCModel(self.platforms),-1,0,0,'PFB',0,adc_bw,1)
-        self.totalblocks += 1
-        
+        self.blocks['ADC'] = CBlock(CBlock.getADCModel(self.platforms),-1,0,0,'PFB',0,adc_bw,antennas)
+        self.totalblocks += antennas
+
         # add the PFB
-        self.blocks['PFB'] = CBlock({'ROACH': {'registers': 0.2, 'slices': 0.1, 'dsp': 0.1, 'bram': 0.4},'GPU': {'time': 0.56}},'ADC',0,adc_bw,'FFT',0,adc_bw,1)
-        self.totalblocks += 1
-        
+        self.blocks['PFB'] = CBlock(CBlock.getPFBModel(self.platforms),'ADC',0,adc_bw,'FFT',0,adc_bw,antennas)
+        self.totalblocks += antennas
+
         # add the FFT
         fft_out_bandwidth = bandwidth* fft_out_bitwidth
-        self.blocks['FFT'] = CBlock({'ROACH': {'registers': 0.2, 'slices': 0.1, 'dsp': 0.1, 'bram':0.4}, 'GPU': {'time': 0.5}},'PFB',0,adc_bw,'VAcc',0,fft_out_bandwidth,1)
-        self.totalblocks += 1
-        
+        self.blocks['FFT'] = CBlock(CBlock.getFFTModel(self.platforms),'PFB',0,adc_bw,'VAcc',0,fft_out_bandwidth,antennas)
+        self.totalblocks += antennas
+
         #add the Vacc
-        self.blocks['VAcc'] = CBlock({'ROACH': {'registers': 0.2, 'slices': 0.1, 'dsp': 0.1, 'bram':0}, 'GPU': {'time': 0.1}},'FFT',0,fft_out_bandwidth,-1,0,0,1)
-        self.totalblocks += 1
-        
+        self.blocks['VAcc'] = CBlock(CBlock.getVAccModel(self.platforms),'FFT',0,fft_out_bandwidth,-1,0,0,antennas)
+        self.totalblocks += antennas
+
         
         
         
