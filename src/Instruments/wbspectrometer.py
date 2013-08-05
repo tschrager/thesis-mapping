@@ -19,6 +19,7 @@
 from instrument import Instrument
 from cblock import CBlock
 from platform import Platform
+from math import *
         
         
 class WBSpectrometer(Instrument):
@@ -50,14 +51,20 @@ class WBSpectrometer(Instrument):
         self.totalblocks += 1
         
         
-        #fft_fine_in_bandwidth = fft_coarse_out_bandwidth/numcoarsechannels
-        #print fft_fine_in_bandwidth
-        #print CBlock.getFFTModel(self.platforms, fft_fine_in_bandwidth, numfinechannels)
-        self.blocks['FFT_fine'] = CBlock({'ROACH': {'registers': 0.2, 'luts': 0.1, 'dsp': 0.1, 'bram':0.4}, 'GPU': {'time': 0.1}},'FFT_coarse',0,fft_fine_in_bandwidth,'VAcc',0,fft_fine_in_bandwidth,numcoarsechannels)
-        self.totalblocks += numcoarsechannels
+        fft_fine_in_bandwidth = fft_coarse_out_bandwidth/numcoarsechannels
+        finemodel = CBlock.getFFTModel(self.platforms, fft_fine_in_bandwidth, numfinechannels)
+        if(finemodel['GPU']['time']<0.1):
+            multiplier = pow(2,int(log(0.1/finemodel['GPU']['time'],2)))
+        else:
+            multiplier = 1
+        finemodel['GPU']['time'] = finemodel['GPU']['time']*multiplier
+        fineblocks = int(numcoarsechannels/multiplier)
+        print fineblocks
+        self.blocks['FFT_fine'] = CBlock(finemodel,'FFT_coarse',0,fft_fine_in_bandwidth,'VAcc',0,fft_fine_in_bandwidth,fineblocks)
+        self.totalblocks += fineblocks
         
-        self.blocks['VAcc'] = CBlock({'ROACH': {'registers': 0.2, 'luts': 0.1, 'dsp': 0.1, 'bram':0.4}, 'GPU': {'time': 0.1}},'FFT_fine',0,fft_fine_in_bandwidth,-1,0,0,numcoarsechannels)
-        self.totalblocks += numcoarsechannels
+        self.blocks['VAcc'] = CBlock({'ROACH': {'registers': 0.2, 'luts': 0.1, 'dsp': 0.1, 'bram':0.4}, 'GPU': {'time': 0.001}},'FFT_fine',0,fft_fine_in_bandwidth,-1,0,0,fineblocks)
+        self.totalblocks += fineblocks
         
         
         

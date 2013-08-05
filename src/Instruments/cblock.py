@@ -123,7 +123,7 @@ class CBlock:
                 # 1/bandwidth GHz * number of channels * 10^-6 = time allowed in ms
                 bench['time'] = bench['time']/(1/bandwidth*numchannels*math.pow(10,-6))
                 model[platform] = bench
-        print model        
+        #print model        
         return model
 
     @staticmethod
