@@ -50,22 +50,22 @@ class FXCorrelator(Instrument):
         #add the platforms
         self.platforms = {}
         
-        self.platforms['ROACH'] = Platform('ROACH',20,10,40,['registers','slices','dsp','bram'])
+        self.platforms['ROACH'] = Platform('ROACH',20,10,40,['registers','luts','dsp','bram'])
         self.platforms['GPU'] = Platform('GPU',10,10,1,['time'])
         
         # add the ADC
         adc_bw = bandwidth*input_bitwidth
-        self.blocks['ADC'] = CBlock({'ROACH': {'registers': 0, 'slices': 0, 'dsp': 0, 'bram': 0},'GPU': {'time': 1.1}},-1,0,0,'PFB',0,adc_bw,numant)
+        self.blocks['ADC'] = CBlock({'ROACH': {'registers': 0, 'luts': 0, 'dsp': 0, 'bram': 0},'GPU': {'time': 1.1}},-1,0,0,'PFB',0,adc_bw,numant)
         self.totalblocks += numant
         
         # add the PFB
-        self.blocks['PFB'] = CBlock({'ROACH': {'registers': 0.2, 'slices': 0.1, 'dsp': 0.1, 'bram': 0.4},'GPU': {'time': 0.56}},'ADC',0,adc_bw,'FFT',0,adc_bw,numant)
+        self.blocks['PFB'] = CBlock({'ROACH': {'registers': 0.2, 'luts': 0.1, 'dsp': 0.1, 'bram': 0.4},'GPU': {'time': 0.56}},'ADC',0,adc_bw,'FFT',0,adc_bw,numant)
         self.totalblocks += numant
         #self.blocks.append
         
         # add the FFT
         fft_out_bandwidth = bandwidth* fft_out_bitwidth
-        self.blocks['FFT'] = CBlock({'ROACH': {'registers': 0.2, 'slices': 0.1, 'dsp': 0.1, 'bram':0.4}, 'GPU': {'time': 0.5}},'PFB',0,adc_bw,'XEng',1,fft_out_bandwidth,numant)
+        self.blocks['FFT'] = CBlock({'ROACH': {'registers': 0.2, 'luts': 0.1, 'dsp': 0.1, 'bram':0.4}, 'GPU': {'time': 0.5}},'PFB',0,adc_bw,'XEng',1,fft_out_bandwidth,numant)
         self.totalblocks += numant
         
         # add the XEngines
