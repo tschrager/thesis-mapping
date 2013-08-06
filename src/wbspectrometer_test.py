@@ -22,14 +22,15 @@
 
 from Instruments import *
 
-numcoarsechannels = 1024
-numfinechannels = 1024
+numcoarsechannels = 4096
+numfinechannels = 32768
 accumulation_length  = 10
-bandwidth = 0.8
+bandwidth = 0.3
 input_bitwidth = 8
 fft_coarse_out_bitwidth = 8
+antennas = 7
     
 #create the instrument
-mywbspectrometer = WBSpectrometer(numcoarsechannels, numfinechannels, accumulation_length, bandwidth, input_bitwidth, fft_coarse_out_bitwidth)
+mywbspectrometer = WBSpectrometer(numcoarsechannels, numfinechannels, accumulation_length, bandwidth, input_bitwidth, fft_coarse_out_bitwidth, antennas)
 mywbspectrometer.runILP()
 

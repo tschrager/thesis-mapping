@@ -23,9 +23,10 @@ from math import *
         
         
 class WBSpectrometer(Instrument):
-    def __init__(self, numcoarsechannels, numfinechannels, accumulation_length, bandwidth, input_bitwidth, fft_coarse_out_bitwidth):
+    def __init__(self, numcoarsechannels, numfinechannels, accumulation_length, bandwidth, input_bitwidth, fft_coarse_out_bitwidth, antennas=1):
         self.maxdesigns=0
         self.blocks = {}
+        self.blockalgs = {}
         self.totalblocks = 0
         
         #add the platform array
@@ -35,37 +36,39 @@ class WBSpectrometer(Instrument):
         self.platforms['ROACH'] = Platform('ROACH',6700,40,40,['registers','luts','dsp','bram'])
         self.platforms['GPU'] = Platform('GPU',3500,10,1,['time'])
         
-        # add the ADC
-        adc_bw = bandwidth*input_bitwidth
-        self.blocks['ADC'] = CBlock(CBlock.getADCModel(self.platforms, bandwidth, input_bitwidth),-1,0,0,'PFB',0,adc_bw,1)
-        self.totalblocks += 1
-        
-        # add the PFB
-        self.blocks['PFB'] = CBlock(CBlock.getPFBModel(self.platforms, bandwidth, input_bitwidth, numcoarsechannels),'ADC',0,adc_bw,'FFT_coarse',0,adc_bw,1)
-        self.totalblocks += 1
-        
-        # add the FFT
-        #print CBlock.getFFTModel(self.platforms, bandwidth, input_bitwidth, numchannels)
-        fft_coarse_out_bandwidth = bandwidth* fft_coarse_out_bitwidth
-        self.blocks['FFT_coarse'] = CBlock(CBlock.getFFTModel(self.platforms, bandwidth, numcoarsechannels),'PFB',0,adc_bw,'FFT_fine',0,fft_coarse_out_bandwidth,1)
-        self.totalblocks += 1
         
         
-        fft_fine_in_bandwidth = fft_coarse_out_bandwidth/numcoarsechannels
-        finemodel = CBlock.getFFTModel(self.platforms, fft_fine_in_bandwidth, numfinechannels)
-        if(finemodel['GPU']['time']<0.1):
-            multiplier = pow(2,int(log(0.1/finemodel['GPU']['time'],2)))
-        else:
-            multiplier = 1
-        finemodel['GPU']['time'] = finemodel['GPU']['time']*multiplier
-        fineblocks = int(numcoarsechannels/multiplier)
-        print fineblocks
-        self.blocks['FFT_fine'] = CBlock(finemodel,'FFT_coarse',0,fft_fine_in_bandwidth,'VAcc',0,fft_fine_in_bandwidth,fineblocks)
-        self.totalblocks += fineblocks
+        for i in range(0,antennas):
+            # add the ADC
+            adc_bw = bandwidth*input_bitwidth
+            self.blocks['ADC'+`i`] = CBlock('ADC', CBlock.getADCModel(self.platforms, bandwidth, input_bitwidth),-1,0,0,'PFB'+`i`,0,adc_bw,1)
+            self.totalblocks += 1
         
-        self.blocks['VAcc'] = CBlock({'ROACH': {'registers': 0.2, 'luts': 0.1, 'dsp': 0.1, 'bram':0.4}, 'GPU': {'time': 0.001}},'FFT_fine',0,fft_fine_in_bandwidth,-1,0,0,fineblocks)
-        self.totalblocks += fineblocks
+            # add the PFB
+            self.blocks['PFB'+`i`] = CBlock('PFB',CBlock.getPFBModel(self.platforms, bandwidth, input_bitwidth, numcoarsechannels),'ADC'+`i`,0,adc_bw,'FFT_coarse'+`i`,0,adc_bw,1)
+            self.totalblocks += 1
         
+            # add the FFT
+            #print CBlock.getFFTModel(self.platforms, bandwidth, input_bitwidth, numchannels)
+            fft_coarse_out_bandwidth = bandwidth* fft_coarse_out_bitwidth
+            self.blocks['FFT_coarse'+`i`] = CBlock('FFT_coarse',CBlock.getFFTModel(self.platforms, bandwidth, numcoarsechannels),'PFB'+`i`,0,adc_bw,'FFT_fine'+`i`,0,fft_coarse_out_bandwidth,1)
+            self.totalblocks += 1
+        
+        
+            fft_fine_in_bandwidth = fft_coarse_out_bandwidth/numcoarsechannels
+            finemodel = CBlock.getFFTModel(self.platforms, fft_fine_in_bandwidth, numfinechannels)
+            if(finemodel['GPU']['time']<0.1):
+                multiplier = pow(2,int(log(0.1/finemodel['GPU']['time'],2)))
+            else:
+                multiplier = 1
+            finemodel['GPU']['time'] = finemodel['GPU']['time']*multiplier
+            fine_blocks = int(numcoarsechannels/multiplier)
+            fine_block_bandwidth = fft_coarse_out_bandwidth/fine_blocks
+            self.blocks['FFT_fine'+`i`] = CBlock('FFT_fine',finemodel,'FFT_coarse'+`i`,0,fine_block_bandwidth,'VAcc'+`i`,0,fft_fine_in_bandwidth,fine_blocks)
+            self.totalblocks += fine_blocks
+        
+            self.blocks['VAcc'+`i`] = CBlock('VAcc',{'ROACH': {'registers': 0.2, 'luts': 0.1, 'dsp': 0, 'bram':0.4}, 'GPU': {'time': 0.001}},'FFT_fine'+`i`,0,fine_block_bandwidth,-1,0,0,fine_blocks)
+            self.totalblocks += fine_blocks
         
         
 

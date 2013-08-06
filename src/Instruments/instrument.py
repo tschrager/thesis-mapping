@@ -1,5 +1,6 @@
 from pulp import *
 import numpy
+from gurobipy import *
 
 class Instrument:   
     def runILP(self):
@@ -23,7 +24,6 @@ class Instrument:
         #determine if board <platform,board> is used (has computation blocks assigned to it)
         #board_isused = numpy.zeros([numplatforms,numboards],dtype=object)
         board_isused = {}
-        board_isdifferent = {}
         #force the boards to fill in a certain order (to reduce symmetry in the design)
         #lex_order = numpy.zeros([numplatforms,numboards],dtype=object)
         lex_order = {}
@@ -37,29 +37,26 @@ class Instrument:
         nextmult = 1
         for blocktype in self.blocks:
             #print blocktype
-            multipliers[blocktype] = 0
-            #maxblockperplatform[blocktype] = 0
-            #for currentplatform in self.platforms:
-            #    if 1/self.blocks[blocktype].resources[currentplatform] > maxblockperplatform[blocktype]:
-            #        maxblockperplatform[blocktype] = numpy.floor(1/self.blocks[blocktype].resources[currentplatform] )
-            multipliers[blocktype] = nextmult
-            nextmult = multipliers[blocktype]*(self.blocks[blocktype].numblocks+1)
-            # if blocktype == 0:
-            #     multipliers[blocktype] = 1
-            # else:
-            #     multipliers[blocktype] = multipliers[blocktype-1]*(numblocks[blocktype-1]+1)
+            if blocktype not in multipliers:
+                totalblocks = 0
+                for otherblocktypes in self.blocks:
+                    if self.blocks[blocktype].algname==self.blocks[otherblocktypes].algname:
+                        multipliers[otherblocktypes] = nextmult
+                        totalblocks = totalblocks + self.blocks[otherblocktypes].numblocks
+
+                nextmult = multipliers[blocktype]*(totalblocks+1)
+            
         maxlexorder = nextmult
         #print multipliers
         #print maxlexorder
+        #print multipliers
         
         for currentplatform in self.platforms:
             board_isused[currentplatform] = numpy.zeros([numboards],dtype=object)
-            board_isdifferent[currentplatform] = numpy.zeros([numboards],dtype=object)
             lex_order[currentplatform] = numpy.zeros([numboards],dtype=object)
             for currentboard in range(numboards):
                 unique_id = `currentplatform`+'_'+`currentboard`
                 board_isused[currentplatform][currentboard]=LpVariable('is_used_'+unique_id,0,1,LpInteger)
-                board_isdifferent[currentplatform][currentboard]=LpVariable('is_different_'+unique_id,0,1,LpInteger)
                 for blocktype in self.blocks:
                     board_blocks[(blocktype,currentplatform,currentboard)]=LpVariable('num' + `blocktype` + '_on_' + unique_id,0,self.blocks[blocktype].numblocks,LpInteger)
                     #if(currentboard!=0 and self.maxdesigns == 1):
@@ -116,17 +113,13 @@ class Instrument:
                 lex_order[currentplatform][currentboard]=LpVariable('lex_order_'+unique_id,0,maxlexorder,LpInteger)
                 prob+=lex_order[currentplatform][currentboard] == lpSum(board_blocks[(blocktype,currentplatform,currentboard)]*multipliers[blocktype] for blocktype in self.blocks)
                 
-                if(currentboard==0):
-                    board_isdifferent[currentplatform][currentboard]=0
                 if(currentboard!=0):
                     prob+=lex_order[currentplatform][currentboard-1]>=lex_order[currentplatform][currentboard]
                     prob+=board_isused[currentplatform][currentboard-1]>=board_isused[currentplatform][currentboard]
                     if(self.maxdesigns != 0):  
                         prob+=lex_order[currentplatform][currentboard] - lex_order[currentplatform][currentboard-1] >= maxlexorder * (board_isused[currentplatform][currentboard]-1)
             
-            #if(self.maxdesigns != 0):        
-            #    prob+= lpSum(board_isdifferent[currentplatform][currentboard] for currentboard in range(numboards)) <= self.maxdesigns
-
+            
         #check that all blocks are allocated
         for blocktype in self.blocks:
             prob+=lpSum(board_blocks[(blocktype,currentplatform,currentboard)] for currentplatform in self.platforms for currentboard in range(numboards)) == self.blocks[blocktype].numblocks
@@ -141,6 +134,9 @@ class Instrument:
 
         prob.writeLP('test_generate_ilp.txt')
 
+        #grb = solvers.GUROBI()
+        #grbmodel = grb.buildSolverModel(prob)
+        #grbmodel.optimize()
         status = prob.solve(GUROBI(msg = 0))
         print LpStatus[status]
 

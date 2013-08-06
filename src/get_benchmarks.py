@@ -59,6 +59,29 @@ def plot_gpu_fft_benchmarks():
     plt.ylabel('Runtime (ms)')
     plt.savefig('Figures/fft_gpu_bench.png')
     #plt.show()
+    
+def plot_gpu_pfb_benchmarks():
+    max_n = 20
+    runtime = numpy.zeros(max_n)
+    for i in range(8,max_n):
+        results = get_gpu_benchmarks(benchmark_dir+'gpu/pfb/results/pfb_4_gtx580_100x',2**i)
+        #print results
+        runtime[i] = results['runtime']
+    print runtime
+    ind = numpy.arange(max_n)
+
+    plt.clf()
+    plt.plot(ind,runtime)
+    plt.xlim((7,max_n))
+    #plt.legend(('registers','luts','bram','dsp'), loc='upper left')
+    plt.title('PFB FIR Benchmark on GTX580')
+    plt.xlabel('log$_2$(FFT length)')
+    plt.ylabel('Runtime (ms)')
+    plt.savefig('Figures/pfb_gpu_bench.png')
+    #plt.show()
+    #plt.yscale('log')
+    #plt.ylabel('Runtime (ms) log scale')
+    #plt.savefig('Figures/pfb_gpu_log_bench.png')
 
 # plot fft benchmark data
 def plot_fft_benchmarks():
@@ -87,6 +110,14 @@ def plot_fft_benchmarks():
     plt.xlabel('log$_2$(FFT length)')
     plt.ylabel('Utilization (%)')
     plt.savefig('Figures/fft_bench.png')
+    
+    #plt.yscale('log')
+    #plt.bar(ind-2*width,registers/58880,width,color='red')
+    #plt.bar(ind-width,luts/58880,width,color='orange')
+    #plt.bar(ind,bram/244,width,color='green')
+    #plt.bar(ind+width,dsp/640,width,color='blue')
+    #plt.ylabel('Utilization (%) log scale')
+    #plt.savefig('Figures/pfb_log_bench.png')
     
     #plt.show()
     
@@ -118,13 +149,23 @@ def plot_pfb_benchmarks():
     plt.ylabel('Utilization (%)')
     
     plt.savefig('Figures/pfb_bench.png')
+    
+    #plt.yscale('log')
+    #plt.bar(ind-2*width,registers/58880,width,color='red')
+    #plt.bar(ind-width,luts/58880,width,color='orange')
+    #plt.bar(ind,bram/244,width,color='green')
+    #plt.bar(ind+width,dsp/640,width,color='blue')
+    #plt.ylabel('Utilization (%) log scale')
+    #plt.savefig('Figures/pfb_log_bench.png')
     #plt.show()
+    
     
 
 #get_fpga_benchmarks(benchmark_dir+'fpga/fft/results/v5sx95t/fftw_12_2_18_18_cw_map.map')
 #get_gpu_benchmarks(benchmark_dir+'gpu/fft/results/c2c_gtx580_100x',256)
-#plot_fft_benchmarks()
-#plot_pfb_benchmarks()
+plot_fft_benchmarks()
+plot_pfb_benchmarks()
 plot_gpu_fft_benchmarks()
+plot_gpu_pfb_benchmarks()
 
 

@@ -25,7 +25,8 @@ gitrepo_dir = os.environ.get('GIT_REPOS')
 benchmark_dir = gitrepo_dir+'/thesis-benchmarks/'
 
 class CBlock:
-    def __init__(self, resourcearray, inputfrom, inputconnection, inputbw, outputto, outputconnection, outputbw, numblocks):
+    def __init__(self, algname, resourcearray, inputfrom, inputconnection, inputbw, outputto, outputconnection, outputbw, numblocks):
+        self.algname = algname
         self.resources = resourcearray
         self.inputfrom = inputfrom
         self.inputconnection = inputconnection
