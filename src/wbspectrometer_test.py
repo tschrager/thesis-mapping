@@ -21,16 +21,26 @@
 
 
 from Instruments import *
+import sys
 
-numcoarsechannels = 4096
-numfinechannels = 32768
+totalchannels = 4096*32768
+
 accumulation_length  = 10
 bandwidth = 0.3
 input_bitwidth = 8
 fft_coarse_out_bitwidth = 8
-antennas = 7
+antennas = 3
     
-#create the instrument
-mywbspectrometer = WBSpectrometer(numcoarsechannels, numfinechannels, accumulation_length, bandwidth, input_bitwidth, fft_coarse_out_bitwidth, antennas)
-mywbspectrometer.runILP()
+#for antennas in {1,3,5,7}:
+for antennas in {7}:
+    #numcoarsechannels = 256
+    numcoarsechannels = 1024
+    numfinechannels = totalchannels/numcoarsechannels
+    while numcoarsechannels <= 4096:
+        #create the instrument
+        sys.stdout = open('Mappings/wbspec_'+`numcoarsechannels`+'_'+`numfinechannels`+'_'+`antennas`, 'w')
+        mywbspectrometer = WBSpectrometer(numcoarsechannels, numfinechannels, accumulation_length, bandwidth, input_bitwidth, fft_coarse_out_bitwidth, antennas)
+        mywbspectrometer.runILP()
+        numcoarsechannels = numcoarsechannels*2
+        numfinechannels = numfinechannels/2
 

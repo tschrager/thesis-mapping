@@ -43,12 +43,13 @@ class Spectrometer(Instrument):
         self.totalblocks += antennas
 
         # add the PFB
-        self.blocks['PFB'] = CBlock('PFB',CBlock.getPFBModel(self.platforms, bandwidth, input_bitwidth, numchannels),'ADC',0,adc_bw,'FFT',0,adc_bw,antennas)
+        pfb_bw = bandwidth*32
+        self.blocks['PFB'] = CBlock('PFB',CBlock.getPFBModel(self.platforms, bandwidth, input_bitwidth, numchannels),'ADC',0,pfb_bw,'FFT',0,adc_bw,antennas)
         self.totalblocks += antennas
 
         # add the FFT
         fft_out_bandwidth = bandwidth* fft_out_bitwidth
-        self.blocks['FFT'] = CBlock('FFT',CBlock.getFFTModel(self.platforms, bandwidth, numchannels),'PFB',0,adc_bw,'VAcc',0,fft_out_bandwidth,antennas)
+        self.blocks['FFT'] = CBlock('FFT',CBlock.getFFTModel(self.platforms, bandwidth, numchannels),'PFB',0,pfb_bw,'VAcc',0,fft_out_bandwidth,antennas)
         self.totalblocks += antennas
 
         #add the Vacc

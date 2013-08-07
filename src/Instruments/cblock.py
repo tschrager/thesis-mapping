@@ -39,6 +39,8 @@ class CBlock:
     # reads in data from map file
     @staticmethod
     def get_fpga_benchmarks(filename):
+        if not os.path.isfile(filename):
+            return {'registers':1.1, 'luts': 1.1, 'bram':1.1, 'dsp':1.1}
         benchmarkfile = open(filename,'r')
         benchmarktext = benchmarkfile.read()
         benchmarkfile.close()
@@ -126,6 +128,10 @@ class CBlock:
                 model[platform] = bench
         #print model        
         return model
+
+    @staticmethod
+    def getTransposeModel(platforms,bandwidth, inputdim, outputdim):
+        return {'ROACH': {'registers': 0.1, 'luts': 0.1, 'dsp': 0.1, 'bram':0.1}, 'GPU': {'time': 1.1}}
 
     @staticmethod
     def getXEngModel(platforms):

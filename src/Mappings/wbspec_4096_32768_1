@@ -1,0 +1,11 @@
+Optimal
+cost = 10200.0
+is_used_'GPU'_0 = 1.0
+is_used_'ROACH'_0 = 1.0
+num'ADC0'_on_'ROACH'_0 = 1.0
+num'FFT_coarse0'_on_'ROACH'_0 = 1.0
+num'FFT_fine0'_on_'GPU'_0 = 16.0
+num'PFB0'_on_'ROACH'_0 = 1.0
+num'Transpose0'_on_'ROACH'_0 = 1.0
+num'VAcc0'_on_'GPU'_0 = 15.0
+num'VAcc0'_on_'ROACH'_0 = 1.0

@@ -45,16 +45,16 @@ class WBSpectrometer(Instrument):
             self.totalblocks += 1
         
             # add the PFB
-            self.blocks['PFB'+`i`] = CBlock('PFB',CBlock.getPFBModel(self.platforms, bandwidth, input_bitwidth, numcoarsechannels),'ADC'+`i`,0,adc_bw,'FFT_coarse'+`i`,0,adc_bw,1)
+            pfb_bw = bandwidth*32
+            self.blocks['PFB'+`i`] = CBlock('PFB',CBlock.getPFBModel(self.platforms, bandwidth, pfb_bw, numcoarsechannels),'ADC'+`i`,0,adc_bw,'FFT_coarse'+`i`,0,adc_bw,1)
             self.totalblocks += 1
         
             # add the FFT
             #print CBlock.getFFTModel(self.platforms, bandwidth, input_bitwidth, numchannels)
-            fft_coarse_out_bandwidth = bandwidth* fft_coarse_out_bitwidth
-            self.blocks['FFT_coarse'+`i`] = CBlock('FFT_coarse',CBlock.getFFTModel(self.platforms, bandwidth, numcoarsechannels),'PFB'+`i`,0,adc_bw,'FFT_fine'+`i`,0,fft_coarse_out_bandwidth,1)
+            fft_coarse_out_bandwidth = bandwidth* fft_coarse_out_bitwidth*2
+            self.blocks['FFT_coarse'+`i`] = CBlock('FFT_coarse',CBlock.getFFTModel(self.platforms, bandwidth, numcoarsechannels),'PFB'+`i`,0,pfb_bw,'Transpose'+`i`,0,fft_coarse_out_bandwidth,1)
             self.totalblocks += 1
-        
-        
+            
             fft_fine_in_bandwidth = fft_coarse_out_bandwidth/numcoarsechannels
             finemodel = CBlock.getFFTModel(self.platforms, fft_fine_in_bandwidth, numfinechannels)
             if(finemodel['GPU']['time']<0.1):
@@ -64,7 +64,11 @@ class WBSpectrometer(Instrument):
             finemodel['GPU']['time'] = finemodel['GPU']['time']*multiplier
             fine_blocks = int(numcoarsechannels/multiplier)
             fine_block_bandwidth = fft_coarse_out_bandwidth/fine_blocks
-            self.blocks['FFT_fine'+`i`] = CBlock('FFT_fine',finemodel,'FFT_coarse'+`i`,0,fine_block_bandwidth,'VAcc'+`i`,0,fft_fine_in_bandwidth,fine_blocks)
+            
+            self.blocks['Transpose'+`i`] = CBlock('Transpose', CBlock.getTransposeModel(self.platforms, bandwidth, numcoarsechannels, numfinechannels), 'FFT_coarse'+`i`,0,fft_coarse_out_bandwidth,'FFT_fine'+`i`,1,fft_coarse_out_bandwidth,1)
+            self.totalblocks += 1
+        
+            self.blocks['FFT_fine'+`i`] = CBlock('FFT_fine',finemodel,'Transpose'+`i`,0,fine_block_bandwidth,'VAcc'+`i`,0,fft_fine_in_bandwidth,fine_blocks)
             self.totalblocks += fine_blocks
         
             self.blocks['VAcc'+`i`] = CBlock('VAcc',{'ROACH': {'registers': 0.2, 'luts': 0.1, 'dsp': 0, 'bram':0.4}, 'GPU': {'time': 0.001}},'FFT_fine'+`i`,0,fine_block_bandwidth,-1,0,0,fine_blocks)
