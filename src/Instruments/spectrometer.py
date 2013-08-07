@@ -33,8 +33,8 @@ class Spectrometer(Instrument):
         self.platforms = {}
         
         # add platforms: cost, inputbw, outputbw, resources
-        self.platforms['ROACH'] = Platform('ROACH',6700,40,40,['registers','luts','dsp','bram'])
-        self.platforms['GPU'] = Platform('GPU',3500,10,1,['time'])
+        self.platforms['ROACH'] = Platform.createRoach('dollars')
+        self.platforms['GPU'] = Platform.createGTX580Server('dollars')
         self.platforms['IBOB'] = Platform('IBOB',2000,10,1,['resources'])
 
         # add the ADC

@@ -133,8 +133,12 @@ class CBlock:
     def getTransposeModel(platforms,bandwidth, inputdim, outputdim):
         return {'ROACH': {'registers': 0.1, 'luts': 0.1, 'dsp': 0.1, 'bram':0.1}, 'GPU': {'time': 1.1}}
 
+    #process channels in groups of 
     @staticmethod
-    def getXEngModel(platforms):
+    def getXEngModel(platforms, bandwidth, nant):
+        fpga_space = {8:{'registers': 2963, 'luts': 2434, 'dsp': 144, 'bram':9}, \
+            16:{'registers': 5352, 'luts': 4068, 'dsp': 144, 'bram':12}}
+        gtx580_timing_in_s = {16:.15, 32:0.39, 48:0.71, 64:1.17, 96:2.4, 128:4.12, 256:13.11, 512:480.3}
         return {'ROACH': {'registers': 0.9, 'luts': 0.1, 'dsp': 0.1, 'bram':0.4}, 'GPU': {'time': 0.25}}
 
     @staticmethod

@@ -160,12 +160,62 @@ def plot_pfb_benchmarks():
     #plt.show()
     
     
+def autolabel(rects):
+    for rect in rects:
+        height = rect.get_height()
+        plt.text(rect.get_x()+rect.get_width()/2., 1.05*height, '%d'%int(height), \
+                ha='center', va='bottom')
+ 
+# plot fft benchmark data
+def plot_fft_comparison_benchmarks():
+    v5 = numpy.zeros(5)
+    v6 = numpy.zeros(5)
+    v7 = numpy.zeros(5)
+    
+    #results = get_fpga_benchmarks(benchmark_dir+'fpga/fft/results/v5sx95t/fftw_15_2_18_18_cw_map.map')
+    v5[0] = 10881
+    v5[1] = 11358
+    v5[2] = 100
+    v5[3] = 30
+    v5[4] = 60
+    
+    #results = get_fpga_benchmarks(benchmark_dir+'fpga/fft/results/v6sx475t/fftw_15_2_18_18_cw_map.map')
+    v6[0] = 10789
+    v6[1] = 9632
+    v6[2] = 100
+    v6[3] = 30
+    v6[4] = 60
+    
+    #results = get_fpga_benchmarks(benchmark_dir+'fpga/fft/results/v7vx980t/fftw_15_2_18_18_cw_map.map')
+    v7[0] = 10788
+    v7[1] = 9773 
+    v7[2] = 100
+    v7[3] = 30
+    v7[4] = 60
+
+    width = 0.2 
+    ind = numpy.arange(5)
+    plt.clf()
+    rects1 = plt.bar(ind-2*width,v5,width,color='red')
+    #autolabel(rects1)
+    plt.bar(ind-width,v6,width,color='orange')
+    plt.bar(ind,v7,width,color='green')
+    
+    strings = ['Registers','LUTs','36k BlockRAM', '18k BlockRAM', 'DSPs']
+    plt.xticks(range(5), strings, size='small')
+
+    plt.legend(('Virtex5sx95t','v6','v7'), loc='upper right')
+    plt.title('800 MHz FFT Resource Utilization on Virtex 5 sx95t')
+    #plt.xlabel('log$_2$(FFT length)')
+    plt.ylabel('Usage')
+    plt.savefig('Figures/fft_tech_bench.png')   
 
 #get_fpga_benchmarks(benchmark_dir+'fpga/fft/results/v5sx95t/fftw_12_2_18_18_cw_map.map')
 #get_gpu_benchmarks(benchmark_dir+'gpu/fft/results/c2c_gtx580_100x',256)
-plot_fft_benchmarks()
-plot_pfb_benchmarks()
-plot_gpu_fft_benchmarks()
-plot_gpu_pfb_benchmarks()
+#plot_fft_benchmarks()
+#plot_pfb_benchmarks()
+#plot_gpu_fft_benchmarks()
+#plot_gpu_pfb_benchmarks()
+plot_fft_comparison_benchmarks()
 
 

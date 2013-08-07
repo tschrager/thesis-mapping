@@ -28,6 +28,22 @@ class Platform(object):
         self.inputbw = inputbw
         self.outputbw = outputbw
         self.resources = resources
+     
+    @classmethod   
+    def createRoach(cls, costtype):
+        if costtype == 'dollars':
+            cost = 6700
+        elif costtype == 'power':
+            cost = 75
+        return cls('ROACH',cost,40,40,['registers','luts','dsp','bram'])
+    
+    @classmethod    
+    def createGTX580Server(cls, costtype):
+        if costtype == 'dollars':
+            cost = 3500
+        elif costtype == 'power':
+            cost = 475
+        return cls('GPU',cost,10,1,['time'])
         
     def isFPGABoard(self):
         if(self.instrumenttype in ['IBOB','ROACH','ROACH2']):

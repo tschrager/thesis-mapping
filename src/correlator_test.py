@@ -20,7 +20,7 @@
 
 from Instruments import *
 
-numchannels = 16
+numchannels = 256
 numant = 16
 accumulation_length = 10
 bandwidth = 0.8
