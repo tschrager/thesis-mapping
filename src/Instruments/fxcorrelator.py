@@ -28,6 +28,7 @@ class FXCorrelator(Instrument):
         self.blocks = {}
         self.totalblocks = 0
         self.maxdesigns = 1
+        self.singleimplementation = 1
         self.windowsize = 1024
         cost = 'dollars'
         
@@ -38,17 +39,17 @@ class FXCorrelator(Instrument):
         
         # add the ADC
         adc_bw = bandwidth*input_bitwidth
-        self.blocks['ADC'] = CBlock('ADC',CBlock.getADCModel(self.platforms, bandwidth, input_bitwidth),-1,0,0,'PFB',0,adc_bw,numant)
+        self.blocks['ADC'] = CBlock('ADC',CBlock.getADCModel(self.platforms, bandwidth, input_bitwidth),-1,0,0,'FIR',0,adc_bw,numant)
         self.totalblocks += numant
         
         # add the PFB
-        self.blocks['PFB'] = CBlock('PFB',CBlock.getPFBModel(self.platforms, bandwidth, input_bitwidth, numchannels),'ADC',0,adc_bw,'FFT',0,adc_bw,numant)
+        self.blocks['FIR'] = CBlock('FIR',CBlock.getPFBModel(self.platforms, bandwidth, input_bitwidth, numchannels),'ADC',0,adc_bw,'FFT',0,adc_bw,numant)
         self.totalblocks += numant
         #self.blocks.append
         
         # add the FFT
         fft_out_bandwidth = bandwidth* fft_out_bitwidth
-        self.blocks['FFT'] = CBlock('FFT',CBlock.getFFTModel(self.platforms, bandwidth, numchannels),'PFB',0,adc_bw,'Transpose',0,fft_out_bandwidth,numant)
+        self.blocks['FFT'] = CBlock('FFT',CBlock.getFFTModel(self.platforms, bandwidth, numchannels),'FIR',0,adc_bw,'Transpose',0,fft_out_bandwidth,numant)
         self.totalblocks += numant
         
         # add the Transpose

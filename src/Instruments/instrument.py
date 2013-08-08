@@ -122,7 +122,16 @@ class Instrument:
             
         #check that all blocks are allocated
         for blocktype in self.blocks:
-            prob+=lpSum(board_blocks[(blocktype,currentplatform,currentboard)] for currentplatform in self.platforms for currentboard in range(numboards)) == self.blocks[blocktype].numblocks
+            prob+=lpSum(board_blocks[(blocktype,currentplatform,currentboard)] for currentplatform in self.platforms for currentboard in range(numboards)) >= self.blocks[blocktype].numblocks
+            # force blocks to be implemented on a single platform
+            if(self.singleimplementation==1):
+                block_is_on={}
+                for currentplatform in self.platforms:
+                    block_is_on[(blocktype,currentplatform)]=LpVariable(`blocktype` + '_is_on_' + currentplatform,0,1,LpInteger)
+                    prob+=lpSum(board_blocks[(blocktype,currentplatform,currentboard)] for currentboard in range(numboards)) <= 2*self.blocks[blocktype].numblocks*block_is_on[(blocktype,currentplatform)]
+                prob+=lpSum(block_is_on[(blocktype,currentplatform)] for currentplatform in self.platforms) == 1
+                
+                    
 
         cost=LpVariable('cost',0,None,LpInteger)
         prob+=lpSum(board_isused[currentplatform][currentboard]*self.platforms[currentplatform].cost for currentplatform in self.platforms for currentboard in range(numboards)) == cost
@@ -143,6 +152,6 @@ class Instrument:
         for v in prob.variables():
             #if(v.varValue != 0 and ('num' in v.name or 'cost' in v.name or 'different' in v.name or 'lex' in v.name or 'is_used' in v.name)):
             #if(v.varValue != 0):
-            if(v.varValue != 0 and ('num' in v.name or 'cost' in v.name or 'is_used' in v.name)):
+            if(v.varValue != 0 and ('num' in v.name or 'cost' in v.name or 'is_used' in v.name or 'is_on' in v.name)):
                 print v.name, "=", v.varValue
     

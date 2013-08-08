@@ -21,7 +21,7 @@
 from Instruments import *
 
 numchannels = 1024
-numant = 32
+numant = 128
 accumulation_length = 10
 bandwidth = 0.1
 input_bitwidth = 8

@@ -29,6 +29,9 @@ class WBSpectrometer(Instrument):
         self.blockalgs = {}
         self.totalblocks = 0
         
+        self.maxdesigns = 1
+        self.singleimplementation = 1
+        
         #add the platform array
         self.platforms = {}
         
