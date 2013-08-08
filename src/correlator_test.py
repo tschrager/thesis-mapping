@@ -20,10 +20,10 @@
 
 from Instruments import *
 
-numchannels = 256
-numant = 16
+numchannels = 1024
+numant = 32
 accumulation_length = 10
-bandwidth = 0.8
+bandwidth = 0.1
 input_bitwidth = 8
 fft_out_bitwidth = 4
 

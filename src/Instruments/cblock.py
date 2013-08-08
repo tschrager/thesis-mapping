@@ -117,9 +117,9 @@ class CBlock:
             if platforms[platform].instrumenttype == 'ROACH':
                 bench = CBlock.get_fpga_benchmarks(benchmark_dir+'fpga/fft/results/v5sx95t/fftw_%02d_2_18_18_cw_map.map'%math.log(numchannels,2))
                 model[platform] = bench
-            if platforms[platform].instrumenttype == 'IBOB':
+            elif platforms[platform].instrumenttype == 'IBOB':
                 model[platform] = {'resources':1.1}
-            if platforms[platform].instrumenttype == 'GPU':
+            elif platforms[platform].instrumenttype == 'GPU':
                 bench = CBlock.get_gpu_benchmarks(benchmark_dir+'gpu/fft/results/c2c_gtx580_100x',numchannels)
                 #print bench['time']
                 #Take time required and divide by time allowed
@@ -135,11 +135,25 @@ class CBlock:
 
     #process channels in groups of 
     @staticmethod
-    def getXEngModel(platforms, bandwidth, nant):
+    def getXEngModel(platforms, bandwidth, nant, numchannels):
         fpga_space = {8:{'registers': 2963, 'luts': 2434, 'dsp': 144, 'bram':9}, \
             16:{'registers': 5352, 'luts': 4068, 'dsp': 144, 'bram':12}}
-        gtx580_timing_in_s = {16:.15, 32:0.39, 48:0.71, 64:1.17, 96:2.4, 128:4.12, 256:13.11, 512:480.3}
-        return {'ROACH': {'registers': 0.9, 'luts': 0.1, 'dsp': 0.1, 'bram':0.4}, 'GPU': {'time': 0.25}}
+        #gtx580_timing_in_s = {16:.15, 32:0.39, 48:0.71, 64:1.17, 96:2.4, 128:4.12, 256:13.11, 512:480.3}
+        gtx580_max_bw = {16:0.06914, 32:0.03095, 48:0.01748, 64:0.01069, 96:0.00536, 128:0.00318, 256:0.00087, 512:0.00023}
+        model = {}
+        for platform in platforms:
+            if platforms[platform].isFPGABoard():
+                if nant in fpga_space:
+                    if platforms[platform].instrumenttype == 'ROACH':
+                        model[platform] = {'registers':fpga_space[nant]['registers']/58880., 'luts':fpga_space[nant]['luts']/58880., \
+                         'dsp':fpga_space[nant]['dsp']/640., 'bram':fpga_space[nant]['bram']/244.}
+                else:
+                    model[platform] = {'registers':1.1, 'luts': 1.1, 'bram':1.1, 'dsp':1.1}
+            else:
+                model[platform] = {'time': bandwidth/gtx580_max_bw[nant]}
+            
+        print model
+        return model
 
     @staticmethod
     def getVAccModel(platforms, bandwidth, fft_out_bitwidth, accumulation_length):

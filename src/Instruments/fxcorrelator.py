@@ -21,6 +21,7 @@
 from instrument import Instrument
 from cblock import CBlock
 from platform import Platform
+import numpy
         
 class FXCorrelator(Instrument):
     def __init__(self, numchannels, numant, accumulation_length, bandwidth, input_bitwidth, fft_out_bitwidth):
@@ -28,7 +29,7 @@ class FXCorrelator(Instrument):
         self.totalblocks = 0
         self.maxdesigns = 1
         self.windowsize = 1024
-        cost = 'power'
+        cost = 'dollars'
         
         #add the platforms
         self.platforms = {}
@@ -55,9 +56,20 @@ class FXCorrelator(Instrument):
         self.totalblocks += numant
         
         # add the XEngines
-        xengine_in_bandwidth = fft_out_bandwidth*numant/numchannels
-        self.blocks['XEng'] = CBlock('XEng',CBlock.getXEngModel(self.platforms) ,'Transpose', 1,xengine_in_bandwidth,-1,0,0,numchannels)
-        self.totalblocks += numchannels
+        gtx580_max_bw = {16:0.06914, 32:0.03095, 48:0.01748, 64:0.01069, 96:0.00536, 128:0.00318, 256:0.00087, 512:0.00023}
+        minxenginebw = bandwidth/numchannels
+        multiplier = numpy.power(2,int(numpy.log2(gtx580_max_bw[numant]/minxenginebw)))
+        
+        numxengines = int(numchannels/multiplier)
+        #print numxengines
+        xengine_in_bandwidth = fft_out_bandwidth*numant/numxengines
+        xengine_sky_bandwidth = bandwidth/numxengines
+        self.blocks['XEng'] = CBlock('XEng',CBlock.getXEngModel(self.platforms, xengine_sky_bandwidth, numant, numchannels) ,'Transpose', 1,xengine_in_bandwidth,-1,0,0,numxengines)
+        self.totalblocks += numxengines
+        
+        # add the VAcc
+        #self.blocks['XEng'] = CBlock('XEng',CBlock.getXEngModel(self.platforms) ,'Transpose', 1,xengine_in_bandwidth,-1,0,0,numchannels)
+        #self.totalblocks += numchannels
         
         
         
