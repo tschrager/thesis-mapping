@@ -101,7 +101,7 @@ class CBlock:
         return model
     
     @staticmethod    
-    def getPFBModel(platforms, bandwidth, input_bitwidth, numchannels):
+    def getPFBWModel(platforms, bandwidth, input_bitwidth, numchannels):
         model = {}
         for platform in platforms:
             if platforms[platform].instrumenttype == 'ROACH':
@@ -118,9 +118,30 @@ class CBlock:
                 model[platform] = bench
         #print model        
         return model
+        
+    @staticmethod
+    #model for 4x fir filters    
+    def getPFBModel(platforms, bandwidth, input_bitwidth, numchannels):
+        model = {}
+        for platform in platforms:
+            if platforms[platform].instrumenttype == 'ROACH':
+                #benchmark creates 2 parallel firs, multiply by 2 to get resources for 4
+                bench = {'registers': 2*538./58880, 'luts': 2*348./58880, 'dsp': 2*18./640, 'bram':2*11./244}
+                model[platform] = bench
+            if platforms[platform].instrumenttype == 'IBOB':
+                model[platform] = {'resources':1.1}
+            if platforms[platform].instrumenttype == 'GPU':
+                bench = CBlock.get_gpu_benchmarks(benchmark_dir+'gpu/pfb/results/pfb_4_gtx580_100x',numchannels)
+                #print bench['time']
+                #Take time required and divide by time allowed
+                # 1/bandwidth GHz * number of channels * 10^-6 = time allowed in ms
+                bench['time'] = 4*bench['time']/(1/bandwidth*numchannels*math.pow(10,-6))
+                model[platform] = bench
+        #print model        
+        return model
 
     @staticmethod    
-    def getFFTModel(platforms, bandwidth, numchannels):
+    def getFFTWModel(platforms, bandwidth, numchannels):
         model = {}
         for platform in platforms:
             if platforms[platform].instrumenttype == 'ROACH':
@@ -137,16 +158,41 @@ class CBlock:
                 model[platform] = bench
         #print model        
         return model
+        
+    @staticmethod  
+    #model for 4x ffts    
+    def getFFTModel(platforms, bandwidth, numchannels):
+        model = {}
+        for platform in platforms:
+            if platforms[platform].instrumenttype == 'ROACH':
+                bench = CBlock.get_fpga_benchmarks(benchmark_dir+'fpga/fft/results/v5sx95t/fft_%02d_2_18_18_cw_map.map'%math.log(numchannels,2))
+                model[platform] = bench
+            elif platforms[platform].instrumenttype == 'IBOB':
+                model[platform] = {'resources':1.1}
+            elif platforms[platform].instrumenttype == 'GPU':
+                bench = CBlock.get_gpu_benchmarks(benchmark_dir+'gpu/fft/results/c2c_gtx580_100x',numchannels)
+                #print bench['time']
+                #Take time required and divide by time allowed
+                # 1/bandwidth GHz * number of channels * 10^-6 = time allowed in ms
+                bench['time'] = 4*bench['time']/(1/bandwidth*numchannels*math.pow(10,-6))
+                model[platform] = bench
+        #print model        
+        return model
 
     @staticmethod
     def getTransposeModel(platforms,bandwidth, inputdim, outputdim):
-        return {'ROACH': {'registers': 0.1, 'luts': 0.1, 'dsp': 0.1, 'bram':0.1}, 'GPU': {'time': 1.1}}
+        return {'ROACH': {'registers': 0.1, 'luts': 0.1, 'dsp': 0, 'bram':0.1}, 'GPU': {'time': 1.1}}
 
-    #process channels in groups of 
+    
     @staticmethod
-    def getXEngModel(platforms, subband, nantpol, numchannels):
+    def getXEngModel(platforms, subband, nantpol):
+        #fpga space model
+        #time to process a window is nantpol/bandwidth
         fpga_space = {8:{'registers': 2963, 'luts': 2434, 'dsp': 144, 'bram':9}, \
-            16:{'registers': 5352, 'luts': 4068, 'dsp': 144, 'bram':12}}
+            16:{'registers': 5352, 'luts': 4068, 'dsp': 144, 'bram':12}, \
+            32:{'registers': 13300, 'luts': 13231, 'dsp': 272, 'bram':560},
+            64:{'registers': 26227, 'luts': 28785, 'dsp': 528, 'bram':2192},
+            128:{'registers': 50912, 'luts': 59326, 'dsp': 1040, 'bram':4624}}
         #gtx580_timing_in_s = {16:.15, 32:0.39, 48:0.71, 64:1.17, 96:2.4, 128:4.12, 256:13.11, 512:480.3}
         gtx580_max_bw = {32:0.06914, 64:0.03095, 96:0.01748, 128:0.01069, 192:0.00536, 256:0.00318, 512:0.00087, 1024:0.00023}
         model = {}
@@ -161,7 +207,7 @@ class CBlock:
             else:
                 model[platform] = {'time': subband/gtx580_max_bw[nantpol]}
             
-        print model
+        #print model
         return model
 
     @staticmethod

@@ -21,13 +21,16 @@
 from Instruments import *
 
 numchannels = 1024
-numantpol = 256
+numantpol = 32
 accumulation_length = 10
 bandwidth = 0.1
 input_bitwidth = 8
 fft_out_bitwidth = 4
 
-while numantpol<=512:
+table_file = open('Tables/fx_corr_table.tex','w+')
+
+while numantpol<=1024:
     mycorrelator = FXCorrelator(numchannels, numantpol, accumulation_length, bandwidth, input_bitwidth, fft_out_bitwidth)
-    print mycorrelator.runILP()
+    table_file.write('%d'%(numantpol/2))
+    table_file.write(mycorrelator.runILP())
     numantpol=numantpol*2
