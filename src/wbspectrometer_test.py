@@ -31,16 +31,26 @@ input_bitwidth = 8
 fft_coarse_out_bitwidth = 8
 antennas = 3
     
+table_file = open('Tables/wbspec_table.tex', 'w+')
+table_file.write('\\begin{tabular}{| c | c | c | c | c | c |} \n\hline \n\diaghead{\\theadfont Diag ColumnmnHead II}{\\textbf{Antennas}}{\\textbf{Dimensions}} & 256 by 524,288  & 512 by 262,144  & 1024 by 131,072  &2048 by 65,536  & 4096 by 32,768\\\\ \n \\hline \n')
+
+
 #for antennas in {1,3,5,7}:
-for antennas in {7}:
+#for antennas in {1,2}:
+for antennas in range(1,8)
     #numcoarsechannels = 256
     numcoarsechannels = 1024
     numfinechannels = totalchannels/numcoarsechannels
+    table_file.write('%d'%(antennas))
     while numcoarsechannels <= 4096:
         #create the instrument
-        sys.stdout = open('Mappings/wbspec_'+`numcoarsechannels`+'_'+`numfinechannels`+'_'+`antennas`, 'w')
+        #sys.stdout = open('Mappings/wbspec_'+`numcoarsechannels`+'_'+`numfinechannels`+'_'+`antennas`, 'w')
         mywbspectrometer = WBSpectrometer(numcoarsechannels, numfinechannels, accumulation_length, bandwidth, input_bitwidth, fft_coarse_out_bitwidth, antennas)
-        mywbspectrometer.runILP()
+        tablestr = mywbspectrometer.runILP()
+        table_file.write(' & ')
+        table_file.write(tablestr)
         numcoarsechannels = numcoarsechannels*2
         numfinechannels = numfinechannels/2
+    table_file.write('\\\\ \n \hline \n')
 
+table_file.write('\end{tabular}\n')

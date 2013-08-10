@@ -24,6 +24,7 @@ class Instrument:
         #determine if board <platform,board> is used (has computation blocks assigned to it)
         #board_isused = numpy.zeros([numplatforms,numboards],dtype=object)
         board_isused = {}
+        total_used = {}
         #force the boards to fill in a certain order (to reduce symmetry in the design)
         #lex_order = numpy.zeros([numplatforms,numboards],dtype=object)
         lex_order = {}
@@ -54,6 +55,7 @@ class Instrument:
         for currentplatform in self.platforms:
             board_isused[currentplatform] = numpy.zeros([numboards],dtype=object)
             lex_order[currentplatform] = numpy.zeros([numboards],dtype=object)
+            
             for currentboard in range(numboards):
                 unique_id = `currentplatform`+'_'+`currentboard`
                 board_isused[currentplatform][currentboard]=LpVariable('is_used_'+unique_id,0,1,LpInteger)
@@ -119,6 +121,9 @@ class Instrument:
                     if(self.maxdesigns != 0):  
                         prob+=lex_order[currentplatform][currentboard] - lex_order[currentplatform][currentboard-1] >= maxlexorder * (board_isused[currentplatform][currentboard]-1)
             
+            total_used[currentplatform] = LpVariable('total_'+currentplatform,0,numboards,LpInteger)
+            prob+=lpSum(board_isused[currentplatform][currentboard] for currentboard in range(numboards)) == total_used[currentplatform] 
+            
             
         #check that all blocks are allocated
         for blocktype in self.blocks:
@@ -149,9 +154,22 @@ class Instrument:
         status = prob.solve(GUROBI(msg = 0))
         print LpStatus[status]
 
+        totalused = {}
+        cost = 0
+        for currentplatform in self.platforms:
+            totalused[currentplatform] = 0
         for v in prob.variables():
             #if(v.varValue != 0 and ('num' in v.name or 'cost' in v.name or 'different' in v.name or 'lex' in v.name or 'is_used' in v.name)):
             #if(v.varValue != 0):
-            if(v.varValue != 0 and ('num' in v.name or 'cost' in v.name or 'is_used' in v.name or 'is_on' in v.name)):
+            if(v.varValue != 0 and ('total' in v.name or 'cost' in v.name or 'is_used' in v.name or 'is_on' in v.name)):
                 print v.name, "=", v.varValue
+            if('cost' in v.name):
+                cost = v.varValue/1000
+            if('total' in v.name):
+                totalused[v.name.split('_')[1]] = v.varValue
+
+                        
+
+                
+        return '\\begin{tabular}{c} %d GPUs \\\\ %d ROACH \\\\ \\$%.1fk \\end{tabular}'%(totalused['GPU'],totalused['ROACH'],cost)
     
