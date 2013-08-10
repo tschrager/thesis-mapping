@@ -37,14 +37,14 @@ table_file.write('\\begin{tabular}{| c | c | c | c | c | c |} \n\hline \n\diaghe
 
 #for antennas in {1,3,5,7}:
 #for antennas in {1,2}:
-for antennas in range(1,8)
+for antennas in range(7,8):
     #numcoarsechannels = 256
-    numcoarsechannels = 1024
+    numcoarsechannels = 2048
     numfinechannels = totalchannels/numcoarsechannels
     table_file.write('%d'%(antennas))
-    while numcoarsechannels <= 4096:
+    while numcoarsechannels < 4096:
         #create the instrument
-        #sys.stdout = open('Mappings/wbspec_'+`numcoarsechannels`+'_'+`numfinechannels`+'_'+`antennas`, 'w')
+        sys.stdout = open('Mappings/wbspec_'+`numcoarsechannels`+'_'+`numfinechannels`+'_'+`antennas`, 'w')
         mywbspectrometer = WBSpectrometer(numcoarsechannels, numfinechannels, accumulation_length, bandwidth, input_bitwidth, fft_coarse_out_bitwidth, antennas)
         tablestr = mywbspectrometer.runILP()
         table_file.write(' & ')

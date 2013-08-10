@@ -164,7 +164,7 @@ class Instrument:
         for v in prob.variables():
             #if(v.varValue != 0 and ('num' in v.name or 'cost' in v.name or 'different' in v.name or 'lex' in v.name or 'is_used' in v.name)):
             #if(v.varValue != 0):
-            if(v.varValue != 0 and ('total' in v.name or 'cost' in v.name or 'is_used' in v.name or 'is_on' in v.name)):
+            if(v.varValue != 0 and ('total' in v.name or 'cost' in v.name or 'num' in v.name or 'is_on' in v.name)):
                 print v.name, "=", v.varValue
             if('cost' in v.name):
                 cost = v.varValue/1000

@@ -75,7 +75,16 @@ class CBlock:
         lastbenchmark = len(allbenchmarks)-1
         result['time'] = float(allbenchmarks[lastbenchmark][2])/(100*int(allbenchmarks[lastbenchmark][0]))
         return result
-        
+    
+    @staticmethod
+    def combineModels(model1, model2):
+        newmodel = {}
+        for platform in model1:
+            newmodel[platform] = {}
+            for resource in model1[platform]:
+                newmodel[platform][resource] = model1[platform][resource] + model2[platform][resource] 
+        return newmodel
+    
     @staticmethod
     def getADCModel(platforms, bandwidth, input_bitwidth):
         model = {}
@@ -135,22 +144,22 @@ class CBlock:
 
     #process channels in groups of 
     @staticmethod
-    def getXEngModel(platforms, subband, nant, numchannels):
+    def getXEngModel(platforms, subband, nantpol, numchannels):
         fpga_space = {8:{'registers': 2963, 'luts': 2434, 'dsp': 144, 'bram':9}, \
             16:{'registers': 5352, 'luts': 4068, 'dsp': 144, 'bram':12}}
         #gtx580_timing_in_s = {16:.15, 32:0.39, 48:0.71, 64:1.17, 96:2.4, 128:4.12, 256:13.11, 512:480.3}
-        gtx580_max_bw = {16:0.06914, 32:0.03095, 48:0.01748, 64:0.01069, 96:0.00536, 128:0.00318, 256:0.00087, 512:0.00023}
+        gtx580_max_bw = {32:0.06914, 64:0.03095, 96:0.01748, 128:0.01069, 192:0.00536, 256:0.00318, 512:0.00087, 1024:0.00023}
         model = {}
         for platform in platforms:
             if platforms[platform].isFPGABoard():
-                if nant in fpga_space:
+                if nantpol in fpga_space:
                     if platforms[platform].instrumenttype == 'ROACH':
-                        model[platform] = {'registers':fpga_space[nant]['registers']/58880., 'luts':fpga_space[nant]['luts']/58880., \
-                         'dsp':fpga_space[nant]['dsp']/640., 'bram':fpga_space[nant]['bram']/244.}
+                        model[platform] = {'registers':fpga_space[nantpol]['registers']/58880., 'luts':fpga_space[nantpol]['luts']/58880., \
+                         'dsp':fpga_space[nantpol]['dsp']/640., 'bram':fpga_space[nantpol]['bram']/244.}
                 else:
                     model[platform] = {'registers':1.1, 'luts': 1.1, 'bram':1.1, 'dsp':1.1}
             else:
-                model[platform] = {'time': subband/gtx580_max_bw[nant]}
+                model[platform] = {'time': subband/gtx580_max_bw[nantpol]}
             
         print model
         return model

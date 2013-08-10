@@ -21,11 +21,13 @@
 from Instruments import *
 
 numchannels = 1024
-numant = 128
+numantpol = 256
 accumulation_length = 10
 bandwidth = 0.1
 input_bitwidth = 8
 fft_out_bitwidth = 4
 
-mycorrelator = FXCorrelator(numchannels, numant, accumulation_length, bandwidth, input_bitwidth, fft_out_bitwidth)
-mycorrelator.runILP()
+while numantpol<=512:
+    mycorrelator = FXCorrelator(numchannels, numantpol, accumulation_length, bandwidth, input_bitwidth, fft_out_bitwidth)
+    print mycorrelator.runILP()
+    numantpol=numantpol*2
