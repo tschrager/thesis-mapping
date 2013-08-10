@@ -1,9 +1,11 @@
 from pulp import *
 import numpy
 from gurobipy import *
+import time
 
 class Instrument:   
     def runILP(self):
+        starttime = time.time()
         prob = LpProblem("Simple test Problem",LpMinimize)
 
         blocktypes = len(self.blocks)
@@ -153,6 +155,7 @@ class Instrument:
         #grbmodel.optimize()
         status = prob.solve(GUROBI(msg = 0))
         print LpStatus[status]
+        endtime = time.time()
 
         totalused = {}
         cost = 0
@@ -171,5 +174,5 @@ class Instrument:
                         
 
                 
-        return '\\begin{tabular}{c} %d GPUs \\\\ %d ROACH \\\\ \\$%.1fk \\end{tabular}'%(totalused['GPU'],totalused['ROACH'],cost)
+        return '\\begin{tabular}{c} %d GPUs \\\\ %d ROACH \\\\ \\$%.1fk \\\\ %.2f seconds \\end{tabular}'%(totalused['GPU'],totalused['ROACH'],cost,(endtime-starttime))
     
