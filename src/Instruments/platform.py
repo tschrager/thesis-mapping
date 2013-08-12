@@ -43,7 +43,7 @@ class Platform(object):
             cost = 3500
         elif costtype == 'power':
             cost = 475
-        return cls('GPU',cost,10,1,['time'])
+        return cls('GPU',cost,20,1,['time'])
         
     def isFPGABoard(self):
         if(self.instrumenttype in ['IBOB','ROACH','ROACH2']):

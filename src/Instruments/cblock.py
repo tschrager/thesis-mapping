@@ -182,6 +182,7 @@ class CBlock:
     @staticmethod
     def getTransposeModel(platforms,bandwidth, inputdim, outputdim):
         return {'ROACH': {'registers': 0.1, 'luts': 0.1, 'dsp': 0, 'bram':0.1}, 'GPU': {'time': 1.1}}
+        #return {'ROACH': {'registers': 0, 'luts': 0, 'dsp': 0, 'bram':0}, 'GPU': {'time': 1.1}}
 
     
     @staticmethod

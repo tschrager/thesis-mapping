@@ -1,12 +1,13 @@
 Optimal
+'ADC0'_is_on_ROACH = 1.0
+'FFT_coarse0'_is_on_ROACH = 1.0
+'FFT_fine0'_is_on_GPU = 1.0
+'PFB0'_is_on_ROACH = 1.0
+'Transpose0'_is_on_ROACH = 1.0
+'VAcc0'_is_on_GPU = 1.0
 cost = 13700.0
 is_used_'GPU'_0 = 1.0
 is_used_'GPU'_1 = 1.0
 is_used_'ROACH'_0 = 1.0
-num'ADC0'_on_'ROACH'_0 = 1.0
-num'FFT_coarse0'_on_'ROACH'_0 = 1.0
-num'FFT_fine0'_on_'GPU'_0 = 10.0
-num'FFT_fine0'_on_'GPU'_1 = 6.0
-num'PFB0'_on_'ROACH'_0 = 1.0
-num'Transpose0'_on_'ROACH'_0 = 1.0
-num'VAcc0'_on_'GPU'_0 = 16.0
+total_GPU = 2.0
+total_ROACH = 1.0

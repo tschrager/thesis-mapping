@@ -49,15 +49,16 @@ class WBSpectrometer(Instrument):
         
             # add the PFB
             pfb_bw = bandwidth*32
-            self.blocks['PFB'+`i`] = CBlock('PFB',CBlock.getPFBModel(self.platforms, bandwidth, pfb_bw, numcoarsechannels),'ADC'+`i`,0,adc_bw,'FFT_coarse'+`i`,0,adc_bw,1)
+            self.blocks['PFB'+`i`] = CBlock('PFB',CBlock.getPFBWModel(self.platforms, bandwidth, pfb_bw, numcoarsechannels),'ADC'+`i`,0,adc_bw,'FFT_coarse'+`i`,0,adc_bw,1)
             self.totalblocks += 1
         
             # add the FFT
             #print CBlock.getFFTModel(self.platforms, bandwidth, input_bitwidth, numchannels)
             fft_coarse_out_bandwidth = bandwidth* fft_coarse_out_bitwidth*2
-            self.blocks['FFT_coarse'+`i`] = CBlock('FFT_coarse',CBlock.getFFTModel(self.platforms, bandwidth, numcoarsechannels),'PFB'+`i`,0,pfb_bw,'Transpose'+`i`,0,fft_coarse_out_bandwidth,1)
+            self.blocks['FFT_coarse'+`i`] = CBlock('FFT_coarse',CBlock.getFFTWModel(self.platforms, bandwidth, numcoarsechannels),'PFB'+`i`,0,pfb_bw,'Transpose'+`i`,0,fft_coarse_out_bandwidth,1)
             self.totalblocks += 1
             
+            # adjust to ensure the block fits on the gpu
             fft_fine_in_bandwidth = fft_coarse_out_bandwidth/numcoarsechannels
             finemodel = CBlock.getFFTModel(self.platforms, fft_fine_in_bandwidth, numfinechannels)
             if(finemodel['GPU']['time']<0.1):
@@ -66,7 +67,10 @@ class WBSpectrometer(Instrument):
                 multiplier = 1
             finemodel['GPU']['time'] = finemodel['GPU']['time']*multiplier
             fine_blocks = int(numcoarsechannels/multiplier)
+            
+            fine_sky_bandwidth = bandwidth/fineblocks
             fine_block_bandwidth = fft_coarse_out_bandwidth/fine_blocks
+            
             
             self.blocks['Transpose'+`i`] = CBlock('Transpose', CBlock.getTransposeModel(self.platforms, bandwidth, numcoarsechannels, numfinechannels), 'FFT_coarse'+`i`,0,fft_coarse_out_bandwidth,'FFT_fine'+`i`,1,fft_coarse_out_bandwidth,1)
             self.totalblocks += 1

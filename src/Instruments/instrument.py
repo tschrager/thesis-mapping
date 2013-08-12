@@ -129,7 +129,11 @@ class Instrument:
             
         #check that all blocks are allocated
         for blocktype in self.blocks:
-            prob+=lpSum(board_blocks[(blocktype,currentplatform,currentboard)] for currentplatform in self.platforms for currentboard in range(numboards)) >= self.blocks[blocktype].numblocks
+            if(self.maxdesigns == 0 and self.singleimplementation==0):
+                prob+=lpSum(board_blocks[(blocktype,currentplatform,currentboard)] for currentplatform in self.platforms for currentboard in range(numboards)) == self.blocks[blocktype].numblocks
+            else:
+                prob+=lpSum(board_blocks[(blocktype,currentplatform,currentboard)] for currentplatform in self.platforms for currentboard in range(numboards)) >= self.blocks[blocktype].numblocks
+                
             # force blocks to be implemented on a single platform
             if(self.singleimplementation==1):
                 block_is_on={}
