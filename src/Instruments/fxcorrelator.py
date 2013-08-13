@@ -36,25 +36,27 @@ class FXCorrelator(Instrument):
         #add the platforms
         self.platforms = {}
         self.platforms['ROACH'] = Platform.createRoach(cost)
-        self.platforms['GPU'] = Platform.createGTX580Server(cost)
+        self.platforms['GTX580'] = Platform.createGTX580Server(cost)
         
         # add the ADC
         adc_bw = skybandwidth*2*input_bitwidth
         #self.blocks['ADC'] = CBlock('ADC',CBlock.getADCModel(self.platforms, skybandwidth, input_bitwidth),-1,0,0,'FIR',0,4*adc_bw,numantpol/4)
-        self.blocks['ADC'] = CBlock('ADC',CBlock.getADCModel(self.platforms, skybandwidth, input_bitwidth),-1,0,0,'FIR',0,4*adc_bw,numantpol/4)
+        self.blocks['ADC'] = CBlock('ADC',CBlock.getADCModel(self.platforms, skybandwidth, input_bitwidth),-1,0,0,'PFBTranspose',0,4*adc_bw,numantpol/4)
         self.totalblocks += numantpol/4
         
-        # add the PFB
-        self.blocks['FIR'] = CBlock('FIR',CBlock.getPFBModel(self.platforms, skybandwidth, input_bitwidth, numchannels),'ADC',0,4*adc_bw,'FFTTranspose',0,4*adc_bw,numantpol/4)
-        self.totalblocks += numantpol/4
+        # add the FIR
+        #self.blocks['FIR'] = CBlock('FIR',CBlock.getPFBModel(self.platforms, skybandwidth, input_bitwidth, numchannels),'ADC',0,4*adc_bw,'FFTTranspose',0,4*adc_bw,numantpol/4)
+        #self.totalblocks += numantpol/4
 
         
         # add the FFT
         fft_out_bandwidth = skybandwidth * 2 * fft_out_bitwidth
-        fftmodel = CBlock.getFFTModel(self.platforms, skybandwidth, numchannels)
+        firmodel = CBlock.getPFBModel(self.platforms, skybandwidth, input_bitwidth, numchannels)
+        fftmodel = CBlock.getFFTRealModel(self.platforms, skybandwidth, numchannels)
         transposemodel = CBlock.getTransposeModel(self.platforms, skybandwidth, numchannels, self.windowsize)
+        combinedmodel = CBlock.combineModels(firmodel, CBlock.combineModels(fftmodel, transposemodel))
         #self.blocks['FFT_Transpose'] = CBlock('FFT-Transpose',CBlock.combineModels(fftmodel, transposemodel),'FIR',0,4*adc_bw,'XEng',1,4*fft_out_bandwidth,numantpol/4)
-        self.blocks['FFTTranspose'] = CBlock('FFTTranspose',CBlock.combineModels(fftmodel, transposemodel),'FIR',0,4*adc_bw,-1,0,0,numantpol/4)
+        self.blocks['PFBTranspose'] = CBlock('PFBTranspose',combinedmodel,'ADC',0,4*adc_bw,'XEng',1,fft_out_bandwidth,numantpol/4)
         #self.blocks['FFT'] = CBlock('FFT',CBlock.combineModels(fftmode, transposemodel),'FIR',0,4*adc_bw,-1,0,0,numantpol/4)
         self.totalblocks += numantpol/4
         
@@ -88,7 +90,7 @@ class FXCorrelator(Instrument):
         minxengines = int(skybandwidth/maxxenginebw)
         
         #note: this needs to be a power of 2
-        numxengines = minxengines
+        numxengines = 8*minxengines
         
         #numxengines = 4*mingpuxengines
         #print 'Num xengines is: ' + `numxengines`
@@ -98,7 +100,7 @@ class FXCorrelator(Instrument):
         #print xengine_sky_bandwidth
         xengine_in_bandwidth = numantpol*fft_out_bandwidth/numxengines
         #print CBlock.getXEngModel(self.platforms, xengine_sky_bandwidth, numantpol)
-        self.blocks['XEng'] = CBlock('XEng',CBlock.getXEngModel(self.platforms, xengine_sky_bandwidth, numantpol) ,'Transpose', 1,xengine_in_bandwidth,-1,0,0,numxengines)
+        self.blocks['XEng'] = CBlock('XEng',CBlock.getXEngModel(self.platforms, xengine_sky_bandwidth, numantpol) ,'PFBTranspose', 1,xengine_in_bandwidth,-1,0,0,numxengines)
         self.totalblocks += numxengines
         
         # add the VAcc

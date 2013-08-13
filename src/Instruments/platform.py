@@ -22,12 +22,13 @@ from numpy import *
 
 class Platform(object):
     
-    def __init__(self, instrumenttype, cost, inputbw, outputbw, resources):
-        self.instrumenttype = instrumenttype
+    def __init__(self, platformtype, cost, inputbw, outputbw, resources, availableresources):
+        self.platformtype = platformtype
         self.cost = cost
         self.inputbw = inputbw
         self.outputbw = outputbw
         self.resources = resources
+        self.availableresources = availableresources
      
     @classmethod   
     def createRoach(cls, costtype):
@@ -35,7 +36,17 @@ class Platform(object):
             cost = 6700
         elif costtype == 'power':
             cost = 75
-        return cls('ROACH',cost,40,40,['registers','luts','dsp','bram'])
+        availableresources= {'registers': 58880.,'luts': 58880., 'dsp': 640.,'bram': 244.}
+        return cls('ROACH',cost,40,40,['registers','luts','dsp','bram'], availableresources)
+    
+    @classmethod   
+    def createRoach2(cls, costtype):
+        if costtype == 'dollars':
+            cost = 10,500
+        elif costtype == 'power':
+            cost = 85
+        availableresources = {'registers': 595200.,'luts': 297600., 'dsp': 2016.,'bram': 1064.}
+        return cls('ROACH2',cost,40,40,['registers','luts','dsp','bram'], availableresources)
     
     @classmethod    
     def createGTX580Server(cls, costtype):
@@ -43,10 +54,17 @@ class Platform(object):
             cost = 3500
         elif costtype == 'power':
             cost = 475
-        return cls('GPU',cost,20,1,['time'])
+        availableresources = {'time':1}
+        return cls('GTX580',cost,20,1,['time'], availableresources)
         
     def isFPGABoard(self):
-        if(self.instrumenttype in ['IBOB','ROACH','ROACH2']):
+        if(self.platformtype in ['IBOB','ROACH','ROACH2']):
             return True
         else:
             return False
+            
+    def calcPercentUtilization(self, usedresources):
+        utilization = {}
+        for resource in self.availableresources:
+            utilization[resource] = usedresources[resource]/self.availableresources[resource]
+        return utilization

@@ -178,5 +178,5 @@ class Instrument:
                         
 
                 
-        return '\\begin{tabular}{c} %d GPUs \\\\ %d ROACH \\\\ \\$%.1fk \\\\ %.2f seconds \\end{tabular}'%(totalused['GPU'],totalused['ROACH'],cost,(endtime-starttime))
+        return '\\begin{tabular}{c} %d GPUs \\\\ %d ROACH \\\\ \\$%.1fk \\\\ %.2f seconds \\end{tabular}'%(totalused['GTX580'],totalused['ROACH'],cost,(endtime-starttime))
     

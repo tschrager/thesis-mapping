@@ -37,7 +37,7 @@ class WBSpectrometer(Instrument):
         
         # add platforms: cost, inputbw, outputbw, resources
         self.platforms['ROACH'] = Platform('ROACH',6700,40,40,['registers','luts','dsp','bram'])
-        self.platforms['GPU'] = Platform('GPU',3500,10,1,['time'])
+        self.platforms['GTX580'] = Platform('GTX580',3500,10,1,['time'])
         
         
         
@@ -61,11 +61,11 @@ class WBSpectrometer(Instrument):
             # adjust to ensure the block fits on the gpu
             fft_fine_in_bandwidth = fft_coarse_out_bandwidth/numcoarsechannels
             finemodel = CBlock.getFFTModel(self.platforms, fft_fine_in_bandwidth, numfinechannels)
-            if(finemodel['GPU']['time']<0.1):
-                multiplier = pow(2,int(log(0.1/finemodel['GPU']['time'],2)))
+            if(finemodel['GTX580']['time']<0.1):
+                multiplier = pow(2,int(log(0.1/finemodel['GTX580']['time'],2)))
             else:
                 multiplier = 1
-            finemodel['GPU']['time'] = finemodel['GPU']['time']*multiplier
+            finemodel['GTX580']['time'] = finemodel['GTX580']['time']*multiplier
             fine_blocks = int(numcoarsechannels/multiplier)
             
             fine_sky_bandwidth = bandwidth/fineblocks
@@ -78,7 +78,7 @@ class WBSpectrometer(Instrument):
             self.blocks['FFT_fine'+`i`] = CBlock('FFT_fine',finemodel,'Transpose'+`i`,0,fine_block_bandwidth,'VAcc'+`i`,0,fft_fine_in_bandwidth,fine_blocks)
             self.totalblocks += fine_blocks
         
-            self.blocks['VAcc'+`i`] = CBlock('VAcc',{'ROACH': {'registers': 0.2, 'luts': 0.1, 'dsp': 0, 'bram':0.4}, 'GPU': {'time': 0.001}},'FFT_fine'+`i`,0,fine_block_bandwidth,-1,0,0,fine_blocks)
+            self.blocks['VAcc'+`i`] = CBlock('VAcc',{'ROACH': {'registers': 0.2, 'luts': 0.1, 'dsp': 0, 'bram':0.4}, 'GTX580': {'time': 0.001}},'FFT_fine'+`i`,0,fine_block_bandwidth,-1,0,0,fine_blocks)
             self.totalblocks += fine_blocks
         
         

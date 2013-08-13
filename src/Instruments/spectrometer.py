@@ -34,8 +34,8 @@ class Spectrometer(Instrument):
         
         # add platforms: cost, inputbw, outputbw, resources
         self.platforms['ROACH'] = Platform.createRoach('dollars')
-        self.platforms['GPU'] = Platform.createGTX580Server('dollars')
-        self.platforms['IBOB'] = Platform('IBOB',2000,10,1,['resources'])
+        self.platforms['GTX580'] = Platform.createGTX580Server('dollars')
+        #self.platforms['IBOB'] = Platform('IBOB',2000,10,1,['resources'])
 
         # add the ADC
         adc_bw = bandwidth*input_bitwidth
