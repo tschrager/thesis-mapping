@@ -22,8 +22,8 @@ from Instruments import *
 import sys
 
 numchannels = 1024
-#numantpol = 32
-numantpol = 1024
+numantpol = 32
+#numantpol = 1024
 accumulation_length = 10
 bandwidth = 0.1
 input_bitwidth = 8
@@ -33,7 +33,7 @@ table_file = open('Tables/fx_corr_table.tex','w+')
 
 while numantpol<=1024:
 #while numantpol<=128:
-    #sys.stdout = open('Mappings/fx_corr_'+`numantpol/2`,'w')
+    sys.stdout = open('Mappings/fx_corr_'+`numantpol/2`,'w')
     mycorrelator = FXCorrelator(numchannels, numantpol, accumulation_length, bandwidth, input_bitwidth, fft_out_bitwidth)
     table_file.write('%d'%(numantpol/2))
     table_file.write(mycorrelator.runILP())

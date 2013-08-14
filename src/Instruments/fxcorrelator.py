@@ -26,52 +26,56 @@ import numpy
 class FXCorrelator(Instrument):
     def __init__(self, numchannels, numantpol, accumulation_length, skybandwidth, input_bitwidth, fft_out_bitwidth):
         self.blocks = {}
-        self.totalblocks = 1
-        self.maxdesigns = 1
+        self.totalblocks = 0
+        self.maxdesigns = 0
         self.singleimplementation = 0
         self.windowsize = 1024
-        #cost = 'dollars'
-        cost = 'power'
+        cost = 'dollars'
+        #cost = 'power'
         
         #add the platforms
         self.platforms = {}
-        self.platforms['ROACH'] = Platform.createRoach(cost)
         self.platforms['GTX580'] = Platform.createGTX580Server(cost)
+        self.platforms['ROACH'] = Platform.createRoach(cost)
+        #self.platforms['DualGTX690'] = Platform.createDualGTX690Server(cost)
+        #self.platforms['ROACH2'] = Platform.createRoach2(cost)
+        
         
         # add the ADC
         adc_bw = skybandwidth*2*input_bitwidth
         #self.blocks['ADC'] = CBlock('ADC',CBlock.getADCModel(self.platforms, skybandwidth, input_bitwidth),-1,0,0,'FIR',0,4*adc_bw,numantpol/4)
-        self.blocks['ADC'] = CBlock('ADC',CBlock.getADCModel(self.platforms, skybandwidth, input_bitwidth),-1,0,0,'PFBTranspose',0,4*adc_bw,numantpol/4)
-        self.totalblocks += numantpol/4
+        # we are using a 16 input adc board
+        # multiplier needs to be a multiple of 4 because the benchmarks do 4 parallel firs and ffts
+        adcmultiplier = 8   # process 4 streams at a time
+        self.blocks['ADC'] = CBlock('ADC',CBlock.getADCModel(self.platforms, skybandwidth, input_bitwidth), -1,0,0,'PFB',0,adcmultiplier*adc_bw,numantpol/adcmultiplier, CBlock.getADCMaximums(self.platforms, adcmultiplier))
+        self.totalblocks += numantpol/adcmultiplier
         
-        # add the FIR
-        #self.blocks['FIR'] = CBlock('FIR',CBlock.getPFBModel(self.platforms, skybandwidth, input_bitwidth, numchannels),'ADC',0,4*adc_bw,'FFTTranspose',0,4*adc_bw,numantpol/4)
-        #self.totalblocks += numantpol/4
+
+        #use pfb to process 4 channels at a time
+        fft_out_bandwidth = skybandwidth * 2 * fft_out_bitwidth
+        pfb_model = CBlock.getPFBModel(self.platforms, skybandwidth, input_bitwidth, numchannels)
+        fft_model = CBlock.getFFTModel(self.platforms, skybandwidth, numchannels)
+        firfftmodel = CBlock.combineModels(pfb_model, fft_model)
+        firfft2xmodel = CBlock.combineModels(firfftmodel, firfftmodel)
+        self.blocks['PFB'] = CBlock('PFB',firfft2xmodel,'ADC',0,adcmultiplier*adc_bw,'Transpose',0,adcmultiplier*fft_out_bandwidth,numantpol/adcmultiplier)
+        self.totalblocks += numantpol/adcmultiplier
+        
+        transposemodel = CBlock.getTransposeModel(self.platforms, skybandwidth, numchannels, self.windowsize)
+        self.blocks['Transpose'] = CBlock('Transpose',transposemodel,'PFB',0,adcmultiplier*fft_out_bandwidth,'XEng',0,adcmultiplier*fft_out_bandwidth,numantpol/adcmultiplier)
+        self.totalblocks += numantpol/adcmultiplier
 
         
-        # add the FFT
-        fft_out_bandwidth = skybandwidth * 2 * fft_out_bitwidth
-        firmodel = CBlock.getPFBModel(self.platforms, skybandwidth, input_bitwidth, numchannels)
-        fftmodel = CBlock.getFFTRealModel(self.platforms, skybandwidth, numchannels)
-        transposemodel = CBlock.getTransposeModel(self.platforms, skybandwidth, numchannels, self.windowsize)
-        combinedmodel = CBlock.combineModels(firmodel, CBlock.combineModels(fftmodel, transposemodel))
-        #self.blocks['FFT_Transpose'] = CBlock('FFT-Transpose',CBlock.combineModels(fftmodel, transposemodel),'FIR',0,4*adc_bw,'XEng',1,4*fft_out_bandwidth,numantpol/4)
-        self.blocks['PFBTranspose'] = CBlock('PFBTranspose',combinedmodel,'ADC',0,4*adc_bw,'XEng',1,fft_out_bandwidth,numantpol/4)
-        #self.blocks['FFT'] = CBlock('FFT',CBlock.combineModels(fftmode, transposemodel),'FIR',0,4*adc_bw,-1,0,0,numantpol/4)
-        self.totalblocks += numantpol/4
-        
-        
-        #use pfb to process 4 channels at a time
+        # add the PFBTranspose
         #fft_out_bandwidth = skybandwidth * 2 * fft_out_bitwidth
-        #pfb_model = CBlock.getPFBModel(self.platforms, skybandwidth, input_bitwidth, numchannels)
-        #fft_model = CBlock.getFFTModel(self.platforms, skybandwidth, numchannels)
+        #firmodel = CBlock.getPFBModel(self.platforms, skybandwidth, input_bitwidth, numchannels)
+        #fftmodel = CBlock.getFFTRealModel(self.platforms, skybandwidth, numchannels)
         #transposemodel = CBlock.getTransposeModel(self.platforms, skybandwidth, numchannels, self.windowsize)
-        #combinedmodel = CBlock.combineModels(pfb_model, fft_model, transpose_model)
-        #self.blocks['PFB'] = CBlock('PFB',CBlock.combineModels(pfb_model, fft_model),'ADC',0,4*adc_bw,'Transpose',0,4*fft_out_bandwidth,numantpol/4)
-        #self.totalblocks += numantpol/4
-        #print pfb_model
-        #print fft_model
-        #print CBlock.combineModels(pfb_model, fft_model)
+        #combinedmodel = CBlock.combineModels(firmodel, CBlock.combineModels(fftmodel, transposemodel))
+        #we need 4 of these for our 16 input adc
+        #self.blocks['PFBTranspose'] = CBlock('PFBTranspose',combinedmodel,'ADC',0,adcmultiplier*adc_bw,'XEng',1,adcmultiplier * fft_out_bandwidth,numantpol/adcmultiplier)
+        #self.totalblocks += numantpol/adcmultiplier
+        
+        
         
         # add the XEngines
         gtx580_max_bw = {32:0.06914, 64:0.03095, 96:0.01748, 128:0.01069, 192:0.00536, 256:0.00318, 512:0.00087, 1024:0.00023}
@@ -100,7 +104,7 @@ class FXCorrelator(Instrument):
         #print xengine_sky_bandwidth
         xengine_in_bandwidth = numantpol*fft_out_bandwidth/numxengines
         #print CBlock.getXEngModel(self.platforms, xengine_sky_bandwidth, numantpol)
-        self.blocks['XEng'] = CBlock('XEng',CBlock.getXEngModel(self.platforms, xengine_sky_bandwidth, numantpol) ,'PFBTranspose', 1,xengine_in_bandwidth,-1,0,0,numxengines)
+        self.blocks['XEng'] = CBlock('XEng',CBlock.getXEngModel(self.platforms, xengine_sky_bandwidth, numantpol) ,'Transpose', 1,xengine_in_bandwidth,-1,0,0,numxengines)
         self.totalblocks += numxengines
         
         # add the VAcc

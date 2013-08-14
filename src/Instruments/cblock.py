@@ -25,7 +25,7 @@ gitrepo_dir = os.environ.get('GIT_REPOS')
 benchmark_dir = gitrepo_dir+'/thesis-benchmarks/'
 
 class CBlock:
-    def __init__(self, algname, resourcearray, inputfrom, inputconnection, inputbw, outputto, outputconnection, outputbw, numblocks):
+    def __init__(self, algname, resourcearray, inputfrom, inputconnection, inputbw, outputto, outputconnection, outputbw, numblocks, maximumblocks = None):
         self.algname = algname
         self.resources = resourcearray
         self.inputfrom = inputfrom
@@ -35,10 +35,11 @@ class CBlock:
         self.outputconnection = outputconnection
         self.outputbw = outputbw
         self.numblocks = numblocks
+        self.maximumblocks = maximumblocks
     
     # reads in data from map file
     @staticmethod
-    def get_fpga_benchmarks(filename):
+    def get_fpga_utilization(filename):
         if not os.path.isfile(filename):
             return {'registers':1.1, 'luts': 1.1, 'bram':1.1, 'dsp':1.1}
         benchmarkfile = open(filename,'r')
@@ -49,15 +50,12 @@ class CBlock:
         benchmarktext = benchmarktext.replace(",","")
 
         # find numbers in map file
+        # use the input file and assume it will work on any technology
         result = {}
-        result['registers'] = float(re.findall("Number of Slice Registers:\s*(\d+)\s*out of\s*\d+\s*\d+\%",benchmarktext)[0])\
-            /int(re.findall("Number of Slice Registers:\s*\d+\s*out of\s*(\d+)\s*\d+\%",benchmarktext)[0])
-        result['luts']  = float(re.findall("Number of Slice LUTs:\s*(\d+)\s*out of\s*\d+\s*\d+\%",benchmarktext)[0])\
-            /int(re.findall("Number of Slice LUTs:\s*\d+\s*out of\s*(\d+)\s*\d+\%",benchmarktext)[0])
-        result['bram']  = float(re.findall("Number of BlockRAM/FIFO:\s*(\d+)\s*out of\s*\d+\s*\d+\%",benchmarktext)[0])\
-            /int(re.findall("Number of BlockRAM/FIFO:\s*\d+\s*out of\s*(\d+)\s*\d+\%",benchmarktext)[0])
-        result['dsp']  = float(re.findall("Number of DSP48Es:\s*(\d+)\s*out of\s*\d+\s*\d+\%",benchmarktext)[0])\
-            /int(re.findall("Number of DSP48Es:\s*\d+\s*out of\s*(\d+)\s*\d+\%",benchmarktext)[0])
+        result['registers'] = float(re.findall("Number of Slice Registers:\s*(\d+)\s*out of\s*\d+\s*\d+\%",benchmarktext)[0])
+        result['luts']  = float(re.findall("Number of Slice LUTs:\s*(\d+)\s*out of\s*\d+\s*\d+\%",benchmarktext)[0])
+        result['bram']  = float(re.findall("Number of BlockRAM/FIFO:\s*(\d+)\s*out of\s*\d+\s*\d+\%",benchmarktext)[0])
+        result['dsp']  = float(re.findall("Number of DSP48Es:\s*(\d+)\s*out of\s*\d+\s*\d+\%",benchmarktext)[0])
 
         return result
         
@@ -100,13 +98,25 @@ class CBlock:
                     model[platform][resource] = 1.1
         return model
     
+    @staticmethod
+    def getADCMaximums(platforms, multiplier):
+        maximums = {}
+        for platform in platforms:
+            # ADCs take no resources on an FPGA board
+            if platforms[platform].isFPGABoard():
+                maximums[platform] = 32/multiplier
+            # ADCs cannot be implemented on a differnt board type
+            else:
+                maximums[platform] = 0
+        return maximums
+    
     @staticmethod    
     def getPFBWModel(platforms, bandwidth, input_bitwidth, numchannels):
         model = {}
         for platform in platforms:
-            if platforms[platform].platformtype == 'ROACH':
-                bench = CBlock.get_fpga_benchmarks(benchmark_dir+'fpga/pfb/results/v5sx95t/pfb_%02d_4_2_08_18_cw_map.map'%math.log(numchannels,2))
-                model[platform] = bench
+            if platforms[platform].isFPGABoard():
+                bench = CBlock.get_fpga_utilization(benchmark_dir+'fpga/pfb/results/v5sx95t/pfb_%02d_4_2_08_18_cw_map.map'%math.log(numchannels,2))
+                model[platform] = platforms[platform].calcPercentUtilization(bench)
             if platforms[platform].platformtype == 'IBOB':
                 model[platform] = {'resources':1.1}
             if platforms[platform].platformtype == 'GTX580':
@@ -123,19 +133,25 @@ class CBlock:
     #model for 4x fir filters    
     def getPFBModel(platforms, bandwidth, input_bitwidth, numchannels):
         model = {}
+        fpga_utlilzation = {'registers': 427., 'luts': 324., 'dsp': 20., 'bram':17.}
         for platform in platforms:
-            if platforms[platform].platformtype == 'ROACH':
+            if platforms[platform].isFPGABoard():
                 #benchmark creates 2 parallel firs, multiply by 2 to get resources for 4
-                bench = {'registers': 427./58880, 'luts': 324./58880, 'dsp': 20./640, 'bram':17./244}
-                model[platform] = bench
-            if platforms[platform].platformtype == 'IBOB':
-                model[platform] = {'resources':1.1}
+                model[platform] = platforms[platform].calcPercentUtilization(fpga_utlilzation)
             if platforms[platform].platformtype == 'GTX580':
                 bench = CBlock.get_gpu_benchmarks(benchmark_dir+'gpu/pfb/results/pfb_4_gtx580_100x',numchannels)
                 #print bench['time']
                 #Take time required and divide by time allowed
                 # 1/bandwidth GHz * number of channels * 10^-6 = time allowed in ms
                 bench['time'] = 4*bench['time']/(1/bandwidth*numchannels*math.pow(10,-6))
+                model[platform] = bench
+            if platforms[platform].platformtype == 'DualGTX690':
+                bench = CBlock.get_gpu_benchmarks(benchmark_dir+'gpu/pfb/results/pfb_4_gtx580_100x',numchannels)
+                #print bench['time']
+                #Take time required and divide by time allowed
+                # 1/bandwidth GHz * number of channels * 10^-6 = time allowed in ms
+                # This platform has 2 boards with 2 chips each so it should take a quarter of the time
+                bench['time'] = (4*bench['time']/(1/bandwidth*numchannels*math.pow(10,-6)))/4
                 model[platform] = bench
         #print model        
         return model
@@ -144,9 +160,9 @@ class CBlock:
     def getFFTWModel(platforms, bandwidth, numchannels):
         model = {}
         for platform in platforms:
-            if platforms[platform].platformtype == 'ROACH':
-                bench = CBlock.get_fpga_benchmarks(benchmark_dir+'fpga/fft/results/v5sx95t/fftw_%02d_2_18_18_cw_map.map'%math.log(numchannels,2))
-                model[platform] = bench
+            if platforms[platform].isFPGABoard():
+                bench = CBlock.get_fpga_utilization(benchmark_dir+'fpga/fft/results/v5sx95t/fftw_%02d_2_18_18_cw_map.map'%math.log(numchannels,2))
+                model[platform] = platforms[platform].calcPercentUtilization(bench)
             elif platforms[platform].platformtype == 'IBOB':
                 model[platform] = {'resources':1.1}
             elif platforms[platform].platformtype == 'GTX580':
@@ -156,6 +172,14 @@ class CBlock:
                 # 1/bandwidth GHz * number of channels * 10^-6 = time allowed in ms
                 bench['time'] = bench['time']/(1/bandwidth*numchannels*math.pow(10,-6))
                 model[platform] = bench
+            elif platforms[platform].platformtype == 'DualGTX690':
+                bench = CBlock.get_gpu_benchmarks(benchmark_dir+'gpu/fft/results/c2c_gtx580_100x',numchannels)
+                #print bench['time']
+                #Take time required and divide by time allowed
+                # 1/bandwidth GHz * number of channels * 10^-6 = time allowed in ms
+                # This platform has 2 boards with 2 chips each so it should take a quarter of the time
+                bench['time'] = (bench['time']/(1/bandwidth*numchannels*math.pow(10,-6)))/4
+                model[platform] = bench
         #print model        
         return model
         
@@ -164,9 +188,9 @@ class CBlock:
     def getFFTModel(platforms, bandwidth, numchannels):
         model = {}
         for platform in platforms:
-            if platforms[platform].platformtype == 'ROACH':
-                bench = CBlock.get_fpga_benchmarks(benchmark_dir+'fpga/fft/results/v5sx95t/fft_%02d_2_18_18_cw_map.map'%math.log(numchannels,2))
-                model[platform] = bench
+            if platforms[platform].isFPGABoard():
+                bench = CBlock.get_fpga_utilization(benchmark_dir+'fpga/fft/results/v5sx95t/fft_%02d_2_18_18_cw_map.map'%math.log(numchannels,2))
+                model[platform] = platforms[platform].calcPercentUtilization(bench)
             elif platforms[platform].platformtype == 'GTX580':
                 bench = CBlock.get_gpu_benchmarks(benchmark_dir+'gpu/fft/results/c2c_gtx580_100x',numchannels)
                 #print bench['time']
@@ -183,9 +207,7 @@ class CBlock:
         model = {}
         fpga_utlilzation = {'registers': 6842., 'luts': 5681., 'dsp': 56., 'bram':28.}
         for platform in platforms:
-            if platforms[platform].platformtype == 'ROACH':
-                #bench = CBlock.get_fpga_benchmarks(benchmark_dir+'fpga/fft/results/v5sx95t/fft_%02d_2_18_18_cw_map.map'%math.log(numchannels,2))
-                #bench = {'registers': 6842./58880, 'luts': 5681./58880, 'dsp': 56./640, 'bram':28./244}
+            if platforms[platform].isFPGABoard():
                 bench = platforms[platform].calcPercentUtilization(fpga_utlilzation)
                 model[platform] = bench
             elif platforms[platform].platformtype == 'GTX580':
@@ -195,12 +217,26 @@ class CBlock:
                 # 1/bandwidth GHz * number of channels * 10^-6 = time allowed in ms
                 bench['time'] = 4*bench['time']/(1/bandwidth*numchannels*math.pow(10,-6))
                 model[platform] = bench
+            elif platforms[platform].platformtype == 'DualGTX690':
+                bench = CBlock.get_gpu_benchmarks(benchmark_dir+'gpu/fft/results/r2c_gtx580_100x',numchannels)
+                #print bench['time']
+                #Take time required and divide by time allowed
+                # 1/bandwidth GHz * number of channels * 10^-6 = time allowed in ms
+                # This platform has 2 boards with 2 chips each so it should take a quarter of the time
+                bench['time'] = (4*bench['time']/(1/bandwidth*numchannels*math.pow(10,-6)))/4
+                model[platform] = bench
         #print model        
         return model
 
     @staticmethod
     def getTransposeModel(platforms,bandwidth, inputdim, outputdim):
-        return {'ROACH': {'registers': 0.05, 'luts': 0.05, 'dsp': 0, 'bram':0.05}, 'GTX580': {'time': 1.1}}
+        model = {}
+        for platform in platforms:
+            if platforms[platform].isFPGABoard():
+                model[platform] = {'registers': 0.1, 'luts': 0.1, 'dsp': 0, 'bram':0.1}
+            elif platforms[platform].isGPUBoard():
+                model[platform] = {'time': 1.1}
+        return model
         #return {'ROACH': {'registers': 0, 'luts': 0, 'dsp': 0, 'bram':0}, 'GTX580': {'time': 1.1}}
 
     
@@ -216,18 +252,19 @@ class CBlock:
             256:{'registers': 50912, 'luts': 59326, 'dsp': 1040, 'bram':4624}}
         #gtx580_timing_in_s = {16:.15, 32:0.39, 48:0.71, 64:1.17, 96:2.4, 128:4.12, 256:13.11, 512:480.3}
         gtx580_max_bw = {32:0.06914, 64:0.03095, 96:0.01748, 128:0.01069, 192:0.00536, 256:0.00318, 512:0.00087, 1024:0.00023}
+        gtx690_max_bw = {32:2*0.07152, 64:2*0.03421, 96:2*0.01982, 128:2*0.01235, 192:2*0.00600, 256:2*0.00365, 512:2*0.00100, 1024:2*0.00027}
         model = {}
         for platform in platforms:
             if platforms[platform].isFPGABoard():
                 if nantpol in fpga_space:
-                    if platforms[platform].platformtype == 'ROACH':
-                        model[platform] = {'registers':fpga_space[nantpol]['registers']/58880., 'luts':fpga_space[nantpol]['luts']/58880., \
-                         'dsp':fpga_space[nantpol]['dsp']/640., 'bram':fpga_space[nantpol]['bram']/244.}
+                    model[platform] = platforms[platform].calcPercentUtilization(fpga_space[nantpol])
                 else:
                     model[platform] = {'registers':1.1, 'luts': 1.1, 'bram':1.1, 'dsp':1.1}
-            else:
+            elif platforms[platform].platformtype == 'GTX580':
                 model[platform] = {'time': subband/gtx580_max_bw[nantpol]}
-            
+            elif platforms[platform].platformtype == 'DualGTX690':
+                # This platform has 2 boards 2x as much bandwidth
+                model[platform] = {'time': subband/(2*gtx690_max_bw[nantpol])}
         #print model
         return model
 

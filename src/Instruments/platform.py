@@ -42,11 +42,11 @@ class Platform(object):
     @classmethod   
     def createRoach2(cls, costtype):
         if costtype == 'dollars':
-            cost = 10,500
+            cost = 10500
         elif costtype == 'power':
             cost = 85
         availableresources = {'registers': 595200.,'luts': 297600., 'dsp': 2016.,'bram': 1064.}
-        return cls('ROACH2',cost,40,40,['registers','luts','dsp','bram'], availableresources)
+        return cls('ROACH2',cost,80,80,['registers','luts','dsp','bram'], availableresources)
     
     @classmethod    
     def createGTX580Server(cls, costtype):
@@ -56,9 +56,24 @@ class Platform(object):
             cost = 475
         availableresources = {'time':1}
         return cls('GTX580',cost,20,1,['time'], availableresources)
+     
+    @classmethod     
+    def createDualGTX690Server(cls, costtype):
+        if costtype == 'dollars':
+            cost = 5500
+        elif costtype == 'power':
+            cost = 800
+        availableresources = {'time':1}
+        return cls('DualGTX690',cost,40,1,['time'], availableresources)
         
     def isFPGABoard(self):
         if(self.platformtype in ['IBOB','ROACH','ROACH2']):
+            return True
+        else:
+            return False
+    
+    def isGPUBoard(self):
+        if(self.platformtype in ['GTX580','DualGTX690']):
             return True
         else:
             return False

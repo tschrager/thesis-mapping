@@ -62,7 +62,10 @@ class Instrument:
                 unique_id = `currentplatform`+'_'+`currentboard`
                 board_isused[currentplatform][currentboard]=LpVariable('is_used_'+unique_id,0,1,LpInteger)
                 for blocktype in self.blocks:
-                    board_blocks[(blocktype,currentplatform,currentboard)]=LpVariable('num' + `blocktype` + '_on_' + unique_id,0,self.blocks[blocktype].numblocks,LpInteger)
+                    if self.blocks[blocktype].maximumblocks is not None:
+                        board_blocks[(blocktype,currentplatform,currentboard)]=LpVariable('num' + `blocktype` + '_on_' + unique_id,0,self.blocks[blocktype].maximumblocks[currentplatform],LpInteger)
+                    else:
+                        board_blocks[(blocktype,currentplatform,currentboard)]=LpVariable('num' + `blocktype` + '_on_' + unique_id,0,self.blocks[blocktype].numblocks,LpInteger)
                     #if(currentboard!=0 and self.maxdesigns == 1):
                     #    prob += board_blocks[(blocktype,currentplatform,currentboard)] == board_blocks[(blocktype,currentplatform,currentboard-1)]
 
