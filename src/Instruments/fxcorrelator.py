@@ -27,8 +27,8 @@ class FXCorrelator(Instrument):
     def __init__(self, numchannels, numantpol, accumulation_length, skybandwidth, input_bitwidth, fft_out_bitwidth):
         self.blocks = {}
         self.totalblocks = 0
-        self.maxdesigns = 0
-        self.singleimplementation = 0
+        self.maxdesigns = 1
+        self.singleimplementation = 1
         self.windowsize = 1024
         cost = 'dollars'
         #cost = 'power'
@@ -46,7 +46,7 @@ class FXCorrelator(Instrument):
         #self.blocks['ADC'] = CBlock('ADC',CBlock.getADCModel(self.platforms, skybandwidth, input_bitwidth),-1,0,0,'FIR',0,4*adc_bw,numantpol/4)
         # we are using a 16 input adc board
         # multiplier needs to be a multiple of 4 because the benchmarks do 4 parallel firs and ffts
-        adcmultiplier = 8   # process 4 streams at a time
+        adcmultiplier = 4   # process 4 streams at a time
         self.blocks['ADC'] = CBlock('ADC',CBlock.getADCModel(self.platforms, skybandwidth, input_bitwidth), -1,0,0,'PFB',0,adcmultiplier*adc_bw,numantpol/adcmultiplier, CBlock.getADCMaximums(self.platforms, adcmultiplier))
         self.totalblocks += numantpol/adcmultiplier
         
@@ -54,10 +54,12 @@ class FXCorrelator(Instrument):
         #use pfb to process 4 channels at a time
         fft_out_bandwidth = skybandwidth * 2 * fft_out_bitwidth
         pfb_model = CBlock.getPFBModel(self.platforms, skybandwidth, input_bitwidth, numchannels)
-        fft_model = CBlock.getFFTModel(self.platforms, skybandwidth, numchannels)
+        fft_model = CBlock.getFFTRealModel(self.platforms, skybandwidth, numchannels)
         firfftmodel = CBlock.combineModels(pfb_model, fft_model)
-        firfft2xmodel = CBlock.combineModels(firfftmodel, firfftmodel)
-        self.blocks['PFB'] = CBlock('PFB',firfft2xmodel,'ADC',0,adcmultiplier*adc_bw,'Transpose',0,adcmultiplier*fft_out_bandwidth,numantpol/adcmultiplier)
+        #print firfftmodel
+        #firfft2xmodel = CBlock.combineModels(firfftmodel, firfftmodel)
+        #print firfft2xmodel
+        self.blocks['PFB'] = CBlock('PFB',firfftmodel,'ADC',0,adcmultiplier*adc_bw,'Transpose',0,adcmultiplier*fft_out_bandwidth,numantpol/adcmultiplier)
         self.totalblocks += numantpol/adcmultiplier
         
         transposemodel = CBlock.getTransposeModel(self.platforms, skybandwidth, numchannels, self.windowsize)

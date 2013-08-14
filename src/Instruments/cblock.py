@@ -233,7 +233,7 @@ class CBlock:
         model = {}
         for platform in platforms:
             if platforms[platform].isFPGABoard():
-                model[platform] = {'registers': 0.1, 'luts': 0.1, 'dsp': 0, 'bram':0.1}
+                model[platform] = {'registers': 0.05, 'luts': 0.05, 'dsp': 0, 'bram':0.05}
             elif platforms[platform].isGPUBoard():
                 model[platform] = {'time': 1.1}
         return model
