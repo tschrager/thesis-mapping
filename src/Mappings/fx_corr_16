@@ -1,0 +1,10 @@
+Optimal
+cost = 21500.0
+num'ADC'_on_'ROACH2'_0 = 8.0
+num'PFB'_on_'ROACH2'_0 = 8.0
+num'Transpose'_on_'ROACH2'_0 = 8.0
+num'XEng'_on_'DualGTX690'_0 = 100.0
+num'XEng'_on_'DualGTX690'_1 = 19.0
+num'XEng'_on_'ROACH2'_0 = 9.0
+total_DualGTX690 = 2.0
+total_ROACH2 = 1.0
