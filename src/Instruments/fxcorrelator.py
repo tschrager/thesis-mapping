@@ -35,10 +35,10 @@ class FXCorrelator(Instrument):
         
         #add the platforms
         self.platforms = {}
-        self.platforms['GTX580'] = Platform.createGTX580Server(cost)
-        self.platforms['ROACH'] = Platform.createRoach(cost)
-        #self.platforms['DualGTX690'] = Platform.createDualGTX690Server(cost)
-        #self.platforms['ROACH2'] = Platform.createRoach2(cost)
+        #self.platforms['GTX580'] = Platform.createGTX580Server(cost)
+        #self.platforms['ROACH'] = Platform.createRoach(cost)
+        self.platforms['DualGTX690'] = Platform.createDualGTX690Server(cost)
+        self.platforms['ROACH2'] = Platform.createRoach2(cost)
         
         
         # add the ADC

@@ -265,7 +265,7 @@ class CBlock:
             elif platforms[platform].platformtype == 'DualGTX690':
                 # This platform has 2 boards 2x as much bandwidth
                 model[platform] = {'time': subband/(2*gtx690_max_bw[nantpol])}
-        #print model
+        print model
         return model
 
     @staticmethod
